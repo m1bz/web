@@ -1,0 +1,13 @@
+{
+  "name": "my-web-project",
+  "version": "1.0.0",
+  "description": "A simple web project using plain JavaScript.",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "open src/index.html",
+    "test": "node test/basic.test.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
