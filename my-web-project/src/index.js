@@ -2,27 +2,22 @@
 // It contains the logic for the application, such as DOM manipulation and event handling.
 
 document.addEventListener('DOMContentLoaded', () => {
-    const app = document.getElementById('app');
-    app.innerHTML = '<h2>Welcome to My Web Project</h2>';
-
-    const button = document.createElement('button');
-    button.textContent = 'Click Me';
-    app.appendChild(button);
-
-    button.addEventListener('click', () => {
-        alert('Button was clicked!');
-    });
-
     // Sample data for search results (replace with your actual data)
     const sampleData = [
         "JavaScript Tutorial",
-        "HTML Basics",
+        "HTML Basics", 
         "CSS Styling Guide",
         "Web Development Tools",
         "React Framework",
         "Node.js Backend",
         "Database Integration",
-        "API Development"
+        "API Development",
+        "Python Programming",
+        "Machine Learning",
+        "Data Science",
+        "Frontend Development",
+        "Backend Development",
+        "Full Stack Development"
     ];
 
     // Get search elements
@@ -31,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Add event listener for input changes (live search)
     searchInput.addEventListener('input', () => {
-        const query = searchInput.value.toLowerCase();
+        const query = searchInput.value.toLowerCase().trim();
         
         // Clear previous results
         searchResults.innerHTML = '';
