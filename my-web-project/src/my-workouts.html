@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Workouts - Spartacus</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <img src="logo.jpeg" alt="Spartacus Logo" class="logo-img">
+            <span class="logo-text">Spartacus</span>
+        </div>
+        
+        <div class="search-container">
+            <input type="text" id="search-input" placeholder="Search workouts..." class="search-input">
+            <div id="search-results" class="search-results"></div>
+        </div>
+        
+        <div class="header-spacer"></div>
+    </header>
+    
+    <main class="main-content">
+        <h1>My Custom Workouts</h1>
+        
+        <div id="workouts-container" class="workouts-container">
+            <!-- Workouts will be dynamically loaded here -->
+        </div>
+        
+        <div class="workout-actions">
+            <a href="exercise-selection.html" class="create-new-btn">+ Create New Workout</a>
+        </div>
+        
+        <div class="back-to-home">
+            <a href="workout-selection.html" class="back-btn">← Back to Workouts</a>
+        </div>
+    </main>
+    
+    <script src="my-workouts.js"></script>
+</body>
+</html>

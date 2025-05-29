@@ -87,4 +87,22 @@ document.addEventListener('DOMContentLoaded', () => {
             searchResults.style.display = 'none';
         }
     });
+
+    // Add event listeners for action buttons
+    const startWorkoutBtn = document.getElementById('start-workout-btn');
+    const createOwnBtn = document.getElementById('create-own-btn');
+    const statisticsBtn = document.getElementById('statistics-btn');
+
+    startWorkoutBtn.addEventListener('click', () => {
+        window.location.href = 'workout-selection.html';
+    });
+
+    createOwnBtn.addEventListener('click', () => {
+        window.location.href = 'exercise-selection.html';
+    });
+
+    statisticsBtn.addEventListener('click', () => {
+        // TODO: Implement statistics functionality
+        console.log('Statistics clicked');
+    });
 });
