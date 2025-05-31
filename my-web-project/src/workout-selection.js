@@ -1,68 +1,17 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Search functionality (reuse from index.js)
-    const sampleData = [
-        "Push Workout",
-        "Pull Workout", 
-        "Legs Workout",
-        "Push-ups",
-        "Pull-ups",
-        "Squats",
-        "Shoulder Press",
-        "Rows",
-        "Lunges"
-    ];
-
-    const searchInput = document.getElementById('search-input');
-    const searchResults = document.getElementById('search-results');
-
-    // Search functionality
-    searchInput.addEventListener('input', () => {
-        const query = searchInput.value.toLowerCase().trim();
-        
-        searchResults.innerHTML = '';
-        
-        if (query.length === 0) {
-            searchResults.style.display = 'none';
-            return;
-        }
-
-        const filteredResults = sampleData.filter(item => 
-            item.toLowerCase().includes(query)
-        );
-
-        if (filteredResults.length > 0) {
-            searchResults.style.display = 'block';
-            
-            filteredResults.forEach(result => {
-                const resultItem = document.createElement('div');
-                resultItem.className = 'result-item';
-                resultItem.textContent = result;
-                
-                resultItem.addEventListener('click', () => {
-                    searchInput.value = result;
-                    searchResults.style.display = 'none';
-                });
-                
-                searchResults.appendChild(resultItem);
-            });
-        } else {
-            searchResults.style.display = 'block';
-            const noResults = document.createElement('div');
-            noResults.className = 'no-results';
-            noResults.textContent = 'No results found';
-            searchResults.appendChild(noResults);
-        }
-    });
-
-    // Workout selection functionality
-    const workoutButtons = document.querySelectorAll('.select-workout-btn');
+    // Workout selection is a public page - no auth required
+    initializeWorkoutSelection();
+    
+    function initializeWorkoutSelection() {
+        // Workout selection functionality
+        const workoutButtons = document.querySelectorAll('.select-workout-btn');
     
     workoutButtons.forEach(button => {
         button.addEventListener('click', (e) => {
             const workoutCard = e.target.closest('.workout-card');
             const workoutType = workoutCard.id.replace('-workout', '');
             
-            // TODO: Redirect to specific workout page
+            // TODO: Redirect to specific workout page or start workout flow
             console.log(`Starting ${workoutType} workout`);
             alert(`Starting ${workoutType.toUpperCase()} workout! (Feature coming soon)`);
         });
@@ -83,8 +32,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (count > 0) {
             myWorkoutsBtn.textContent = `View My Workouts (${count})`;
             myWorkoutsBtn.classList.add('has-workouts');
+            myWorkoutsBtn.disabled = false;
         } else {
             myWorkoutsBtn.textContent = 'No Custom Workouts Yet';
+            myWorkoutsBtn.classList.remove('has-workouts');
             myWorkoutsBtn.disabled = true;
         }
     }
@@ -92,10 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize button state
     updateMyWorkoutsButton();
 
-    // Close search results when clicking outside
-    document.addEventListener('click', (e) => {
-        if (e.target !== searchInput && e.target !== searchResults) {
-            searchResults.style.display = 'none';
-        }
-    });
+    // Note: The page-specific search input and dropdown logic has been removed.
+    // It is now handled by shared-search.js, linked in workout-selection.html.
+    }
 });

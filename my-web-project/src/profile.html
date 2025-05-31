@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Exercise Selection - Spartacus</title>
+    <title>User Profile - Spartacus</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -20,23 +20,23 @@
         </div>
         <div id="user-profile-button-container"></div>
     </header>
-    <main class="main-content">
-        <h1>Exercise Categories</h1>
-        <div id="exercise-category-grid" class="workout-grid">
-            <!-- Muscle group cards will be dynamically inserted here by JS -->
+
+    <main class="main-content profile-container">
+        <h1>Your Profile</h1>
+        <div id="profile-details" class="profile-details-card">
+            <!-- User details will be populated here -->
+            <p>Loading profile...</p>
         </div>
         
-        <div id="exercise-list-container" style="display: none;">
-            <h2 id="exercise-list-title"></h2>
-            <div id="exercise-items-grid" class="workout-grid">
-                <!-- Individual exercises for a selected category will be shown here -->
-            </div>
-            <button id="back-to-categories-btn" class="back-btn" style="margin-top: 20px;">← Back to Categories</button>
+        <div id="profile-actions">
+            <button id="edit-profile-btn" class="action-btn">Edit Profile (WIP)</button>
+            <button id="view-my-workouts-btn" class="action-btn">My Saved Workouts</button>
         </div>
-
     </main>
+
     <script src="all-exercises.js"></script>
-    <script src="exercise-selection.js"></script>
     <script src="auth.js"></script>
+    <script src="profile.js"></script>
+    <script src="shared-search.js"></script> <!-- For header search bar -->
 </body>
-</html>
+</html> 

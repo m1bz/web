@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Spartacus</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="header">
+        <div class="logo">
+            <a href="index.html" style="text-decoration: none; display: flex; align-items: center; gap: 15px;">
+                <img src="logo.jpeg" alt="Spartacus Logo" class="logo-img">
+                <span class="logo-text">Spartacus</span>
+            </a>
+        </div>
+        <div class="search-container">
+            <input type="text" id="search-input" placeholder="Search exercises..." class="search-input">
+            <div id="search-results-dropdown" class="search-results" style="display: none;"></div>
+        </div>
+        <div id="user-profile-button-container"></div>
+    </header>
+
+    <main class="main-content login-container">
+        <h1>Login to Spartacus</h1>
+        <form id="login-form" class="login-form-actual">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit" class="action-btn login-submit-btn">Login</button>
+            <p id="login-error-message" class="error-message" style="display: none;"></p>
+        </form>
+        <p class="form-switch-text">Don't have an account? <a href="#">Sign up</a> (Not implemented yet)</p>
+    </main>
+
+    <script src="all-exercises.js"></script>
+    <script src="auth.js"></script>
+    <script src="login.js"></script>
+    <script src="shared-search.js"></script> <!-- For header search bar -->
+</body>
+</html> 

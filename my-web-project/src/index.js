@@ -1,108 +1,111 @@
 // This is the main JavaScript file for the web project.
 // It contains the logic for the application, such as DOM manipulation and event handling.
 
-document.addEventListener('DOMContentLoaded', () => {
-    // Sample data for search results (replace with your actual data)
-    const sampleData = [
-        "JavaScript Tutorial",
-        "HTML Basics", 
-        "CSS Styling Guide",
-        "Web Development Tools",
-        "React Framework",
-        "Node.js Backend",
-        "Database Integration",
-        "API Development",
-        "Python Programming",
-        "Machine Learning",
-        "Data Science",
-        "Frontend Development",
-        "Backend Development",
-        "Full Stack Development"
-    ];
+// Mock authentication (will be replaced by auth.js logic)
+// const mockCredentials = {
+//     username: 'admin',
+//     password: 'admin'
+// };
+// let isAuthenticated = false; // Managed by auth.js
 
-    // Get search elements
-    const searchInput = document.getElementById('search-input');
-    const searchResults = document.getElementById('search-results');
+// DOM Elements
+const exploreExercisesBtn = document.getElementById('explore-exercises-btn');
+const createWorkoutBtn = document.getElementById('create-workout-btn');
+const searchInput = document.getElementById('search-input');
+const searchResultsDropdown = document.getElementById('search-results-dropdown'); // Renamed for clarity
 
-    // Add event listener for input changes (live search)
-    searchInput.addEventListener('input', () => {
-        const query = searchInput.value.toLowerCase().trim();
-        
-        // Clear previous results
-        searchResults.innerHTML = '';
-        
-        // If search input is empty, hide results
-        if (query.length === 0) {
-            searchResults.style.display = 'none';
-            return;
-        }
+// Event Listeners for main page buttons
+exploreExercisesBtn.addEventListener('click', () => {
+    window.location.href = 'exercise-selection.html';
+});
 
-        // Filter results based on input
-        const filteredResults = sampleData.filter(item => 
-            item.toLowerCase().includes(query)
-        );
+createWorkoutBtn.addEventListener('click', () => {
+    // Auth check will be handled by auth.js or a dedicated function
+    // For now, assuming checkLoginStatus() exists in auth.js
+    if (checkLoginStatus()) {
+        window.location.href = 'workout-selection.html'; 
+    } else {
+        window.location.href = 'login.html'; // Redirect to login page
+    }
+});
 
-        // Display results
-        if (filteredResults.length > 0) {
-            searchResults.style.display = 'block';
-            
-            filteredResults.forEach(result => {
-                const resultItem = document.createElement('div');
-                resultItem.className = 'result-item';
-                resultItem.textContent = result;
-                
-                // Add click handler for result items
-                resultItem.addEventListener('click', () => {
-                    searchInput.value = result;
-                    searchResults.style.display = 'none';
-                });
-                
-                searchResults.appendChild(resultItem);
-            });
-        } else {
-            // Show no results message
-            searchResults.style.display = 'block';
-            const noResults = document.createElement('div');
-            noResults.className = 'no-results';
-            noResults.textContent = 'No results found';
-            searchResults.appendChild(noResults);
-        }
-    });
+// --- Search Functionality (Common across pages, adapted for index.js) ---
+function performSearch(searchTerm, isKeyPress = false) {
+    if (searchTerm.length < 2 && !isKeyPress) {
+        searchResultsDropdown.style.display = 'none';
+        return;
+    }
+    // If Enter is pressed, redirect to the search results page
+    if (isKeyPress) {
+        window.location.href = `search-results.html?q=${encodeURIComponent(searchTerm)}`;
+        return;
+    }
 
-    // Handle search form submission (Enter key press)
-    searchInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            const searchTerm = searchInput.value.trim();
-            if (searchTerm) {
-                // Redirect to search page with query parameter
-                window.location.href = `search-results.html?q=${encodeURIComponent(searchTerm)}`;
-            }
-        }
-    });
+    const exercises = getAllExercises(); // From all-exercises.js
+    const filteredExercises = exercises.filter(exercise => 
+        exercise.name.toLowerCase().includes(searchTerm.toLowerCase())
+    ).slice(0, 5); // Show top 5 suggestions
 
-    // Close search results when clicking outside
-    document.addEventListener('click', (e) => {
-        if (e.target !== searchInput && e.target !== searchResults) {
-            searchResults.style.display = 'none';
-        }
-    });
+    if (filteredExercises.length > 0) {
+        searchResultsDropdown.innerHTML = filteredExercises
+            .map(ex => `<div class="result-item" data-exercise-name="${ex.name}">${ex.name}</div>`)
+            .join('');
+        searchResultsDropdown.style.display = 'block';
+    } else {
+        searchResultsDropdown.innerHTML = '<div class="no-results">No exercises found</div>';
+        searchResultsDropdown.style.display = 'block'; // Keep open to show "no results"
+    }
+}
 
-    // Add event listeners for action buttons
-    const startWorkoutBtn = document.getElementById('start-workout-btn');
-    const createOwnBtn = document.getElementById('create-own-btn');
-    const statisticsBtn = document.getElementById('statistics-btn');
+// Handle search input
+searchInput.addEventListener('input', (e) => {
+    performSearch(e.target.value);
+});
 
-    startWorkoutBtn.addEventListener('click', () => {
-        window.location.href = 'workout-selection.html';
-    });
+// Handle Enter key in search bar
+searchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        performSearch(searchInput.value, true); // Pass true for isKeyPress
+    }
+});
 
-    createOwnBtn.addEventListener('click', () => {
-        window.location.href = 'exercise-selection.html';
-    });
+// Handle search result dropdown clicks
+searchResultsDropdown.addEventListener('click', (e) => {
+    const resultItem = e.target.closest('.result-item');
+    if (resultItem) {
+        const exerciseName = resultItem.dataset.exerciseName;
+        // Redirect to search results page with the specific exercise name as query
+        window.location.href = `search-results.html?q=${encodeURIComponent(exerciseName)}`;
+        searchResultsDropdown.style.display = 'none';
+        searchInput.value = ''; // Clear search input
+    }
+});
 
-    statisticsBtn.addEventListener('click', () => {
-        // TODO: Implement statistics functionality
-        console.log('Statistics clicked');
-    });
+// Close search results dropdown when clicking outside
+document.addEventListener('click', (e) => {
+    if (!searchInput.contains(e.target) && !searchResultsDropdown.contains(e.target)) {
+        searchResultsDropdown.style.display = 'none';
+    }
+});
+
+// Remove old auth logic if any was here, it will be in auth.js
+// Example: The old prompt-based login is removed.
+
+// Add event listeners for action buttons
+const startWorkoutBtn = document.getElementById('start-workout-btn');
+const createOwnBtn = document.getElementById('create-own-btn');
+const statisticsBtn = document.getElementById('statistics-btn');
+
+startWorkoutBtn.addEventListener('click', () => {
+    window.location.href = 'workout-selection.html';
+});
+
+createOwnBtn.addEventListener('click', () => {
+    window.location.href = 'exercise-selection.html';
+});
+
+statisticsBtn.addEventListener('click', () => {
+    // TODO: Implement statistics functionality
+    console.log('Statistics clicked');
 });
