@@ -47,7 +47,7 @@ body {
 }
 
 .header-spacer {
-    width: 100px; /* Balance the logo on the left */
+    width: 100px; /* Balance the logo on the left with action buttons on the right */
 }
 
 /* Search Container Styles */
@@ -58,6 +58,7 @@ body {
     margin: 0 50px;
     display: flex;
     justify-content: center;
+    align-items: center;
 }
 
 .search-input {
@@ -75,9 +76,9 @@ body {
 }
 
 .search-input:focus {
-    border-color: rgba(76, 175, 80, 0.8);
+    border-color: rgba(52, 152, 219, 0.8);
     background: rgba(255, 255, 255, 0.3);
-    box-shadow: 0 6px 25px rgba(76, 175, 80, 0.2);
+    box-shadow: 0 6px 25px rgba(52, 152, 219, 0.2);
     transform: translateY(-2px);
 }
 
@@ -154,30 +155,28 @@ h1 {
 
 /* Action Buttons Styles */
 .action-buttons {
-    position: fixed;
-    right: 30px;
-    top: 50%;
-    transform: translateY(-50%);
     display: flex;
-    flex-direction: column;
-    gap: 20px;
+    flex-direction: row;
+    gap: 10px;
     z-index: 50;
+    flex-shrink: 0;
 }
 
 .action-btn {
-    padding: 15px 25px;
-    font-size: 16px;
+    padding: 10px 15px;
+    font-size: 14px;
     font-weight: bold;
     color: #fff;
     background: linear-gradient(135deg, #3498db, #2980b9);
     border: none;
-    border-radius: 25px;
+    border-radius: 20px;
     cursor: pointer;
     box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
     transition: all 0.3s ease;
-    min-width: 180px;
+    min-width: 120px;
     text-align: center;
     backdrop-filter: blur(5px);
+    white-space: nowrap;
 }
 
 .action-btn:hover {
@@ -546,10 +545,23 @@ h1 {
         flex-direction: column;
         gap: 15px;
     }
-    
-    .search-container {
+      .search-container {
         margin: 0;
         max-width: 100%;
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .action-buttons {
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    .action-btn {
+        min-width: 100px;
+        padding: 8px 12px;
+        font-size: 12px;
     }
     
     .header-spacer {
@@ -559,27 +571,8 @@ h1 {
     h1 {
         font-size: 2rem;
     }
-    
-    .main-content {
+      .main-content {
         padding: 20px 15px;
-    }
-    
-    .action-buttons {
-        position: relative;
-        right: auto;
-        top: auto;
-        transform: none;
-        flex-direction: row;
-        justify-content: center;
-        flex-wrap: wrap;
-        margin-top: 30px;
-        gap: 15px;
-    }
-    
-    .action-btn {
-        min-width: 150px;
-        padding: 12px 20px;
-        font-size: 14px;
     }
     
     .workout-grid {
