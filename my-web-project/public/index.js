@@ -86,11 +86,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target !== searchInput && e.target !== searchResults) {
             searchResults.style.display = 'none';
         }
-    });
-
-    // Add event listeners for action buttons
+    });    // Add event listeners for action buttons
     const startWorkoutBtn = document.getElementById('start-workout-btn');
     const createOwnBtn = document.getElementById('create-own-btn');
+    const exploreBtn = document.getElementById('explore-btn');
     const statisticsBtn = document.getElementById('statistics-btn');
 
     startWorkoutBtn.addEventListener('click', () => {
@@ -99,6 +98,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     createOwnBtn.addEventListener('click', () => {
         window.location.href = 'exercise-selection.html';
+    });
+
+    exploreBtn.addEventListener('click', () => {
+        window.location.href = 'body-parts.html';
     });
 
     statisticsBtn.addEventListener('click', () => {

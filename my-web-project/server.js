@@ -10,15 +10,15 @@ class Server {
         this.server = null;
         this.routes = new Map();
         this.setupRoutes();
-    }
-
-    setupRoutes() {
+    }    setupRoutes() {
         // Static file routes
         this.routes.set('GET /', this.serveFile.bind(this, 'public/index.html'));
         this.routes.set('GET /workout-selection', this.serveFile.bind(this, 'public/workout-selection.html'));
         this.routes.set('GET /exercise-selection', this.serveFile.bind(this, 'public/exercise-selection.html'));
         this.routes.set('GET /my-workouts', this.serveFile.bind(this, 'public/my-workouts.html'));
         this.routes.set('GET /search-results', this.serveFile.bind(this, 'public/search-results.html'));
+        this.routes.set('GET /body-parts', this.serveFile.bind(this, 'public/body-parts.html'));
+        this.routes.set('GET /exercises-by-bodypart', this.serveFile.bind(this, 'public/exercises-by-bodypart.html'));
         
         // API routes
         this.routes.set('GET /api/workouts', this.getWorkouts.bind(this));
