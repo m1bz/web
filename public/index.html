@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spartacus</title>
+
+  <!-- Google Font (optional) -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- Link to our new stylesheet -->
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="logo">
+      <a href="index.html" class="logo-link">
+        <img src="logo.jpeg" alt="Spartacus Logo" class="logo-img" />
+        <span class="logo-text">Spartacus</span>
+      </a>
+    </div>
+    <div class="search-container">
+      <input
+        type="text"
+        id="search-input"
+        placeholder="Search..."
+        class="search-input"
+      />
+      <div id="search-results" class="search-results"></div>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div class="main-navigation">
+      <button class="nav-card" id="explore-btn">
+        <div class="nav-icon">🎲</div>
+        <h3>Workout Generator</h3>
+        <p>Generate custom workouts by body part</p>
+      </button>
+
+      <button class="nav-card" id="workouts-btn">
+        <div class="nav-icon">🏋️</div>
+        <h3>Workouts</h3>
+        <p>Start pre-made workout routines</p>
+      </button>
+
+      <button class="nav-card" id="my-workouts-btn">
+        <div class="nav-icon">📋</div>
+        <h3>My Workouts</h3>
+        <p>View your custom workouts</p>
+      </button>
+
+      <button class="nav-card" id="directory-btn">
+        <div class="nav-icon">📚</div>
+        <h3>Directory</h3>
+        <p>Browse all exercises by muscle groups</p>
+      </button>
+    </div>
+  </main>
+
+  <script src="index.js"></script>
+</body>
+</html>
