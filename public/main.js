@@ -1,7 +1,4 @@
-/* ============================================================
-   Spartacus – body-map exercise explorer
-   main.js   2025-06-03
-   ============================================================ */
+// public\main.js
 
 const EXERCISE_URL  = 'exercises.json';
 const SVG_SELECTOR  = 'g.clickable';
@@ -35,7 +32,6 @@ fetch(EXERCISE_URL)
           muscle          : muscle.toLowerCase(),
           equipmentType   : type,          // parent
           equipmentSub    : subtype,       // child (may be null)
-          /* one-liner used in cards */
           equipmentLabel  : subtype || type
         };
       })
@@ -162,7 +158,7 @@ function buildFilters () {
 function onFilter (e) {
   /* real value is on the element, only the meta data lives in data-* */
   const key      = e.target.dataset.key;
-  const value    = e.target.value;           // ✅ correct source
+  const value    = e.target.value;           
   const type     = e.target.dataset.type;
   const subtype  = e.target.dataset.subtype;
   const checked  = e.target.checked;

@@ -60,17 +60,12 @@ class Server {
         FROM exercises
       `);
 
-      // 2) Build an object of the same shape as your old exercises.json:
-      //    {
-      //      abdominals: { exercises: [ {name, primary_muscle, secondary_muscles, difficulty, equipment: {type, subtype}, instructions }, ... ] },
-      //      biceps: { exercises: [ … ] },
-      //      …
-      //    }
+      
       const rows = result.rows;
       const out = {};
 
       for (const row of rows) {
-        const muscleKey = row.primary_muscle; // e.g. 'abdominals'
+        const muscleKey = row.primary_muscle; 
         if (!out[muscleKey]) {
           out[muscleKey] = { exercises: [] };
         }
