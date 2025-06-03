@@ -39,43 +39,28 @@ class Database {
             this.isConnected = false;
             console.log('Disconnected from PostgreSQL database');
         }
-    }
-
-    async initializeTables() {
+    }    async initializeTables() {
         try {
-            // Create users table
+            
+
+            // Create muscles table
             await this.client.query(`
-                CREATE TABLE IF NOT EXISTS users (
-                    id SERIAL PRIMARY KEY,
-                    username VARCHAR(50) UNIQUE NOT NULL,
-                    email VARCHAR(100) UNIQUE NOT NULL,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                CREATE TABLE IF NOT EXISTS muscles (
+                  name VARCHAR PRIMARY KEY
                 )
             `);
 
-            // Create workouts table
+            // Create exercises table
             await this.client.query(`
-                CREATE TABLE IF NOT EXISTS workouts (
-                    id SERIAL PRIMARY KEY,
-                    user_id INTEGER REFERENCES users(id),
-                    name VARCHAR(100) NOT NULL,
-                    type VARCHAR(50) NOT NULL,
-                    exercises JSONB,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            `);
-
-            // Create exercise_logs table
-            await this.client.query(`
-                CREATE TABLE IF NOT EXISTS exercise_logs (
-                    id SERIAL PRIMARY KEY,
-                    user_id INTEGER REFERENCES users(id),
-                    workout_id INTEGER REFERENCES workouts(id),
-                    exercise_name VARCHAR(100) NOT NULL,
-                    sets INTEGER,
-                    reps INTEGER,
-                    weight DECIMAL(5,2),
-                    completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                CREATE TABLE IF NOT EXISTS exercises (
+                  id SERIAL PRIMARY KEY,
+                  name VARCHAR NOT NULL,
+                  primary_muscle VARCHAR NOT NULL REFERENCES muscles(name),
+                  secondary_muscles TEXT[] NULL, 
+                  difficulty VARCHAR NOT NULL,
+                  equipment_type VARCHAR NOT NULL,
+                  equipment_subtype VARCHAR,
+                  instructions TEXT NOT NULL
                 )
             `);
 
