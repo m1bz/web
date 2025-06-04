@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Saved Workouts · Spartacus</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="header" role="banner">
+    <a href="home.html" class="logo-link">
+      <img src="logo.jpeg" alt="Spartacus" class="logo-img">
+      <span class="logo-text">Spartacus</span>
+    </a>
+    <h1 style="font-size:1.4rem;font-weight:700">My Saved Workouts</h1>
+    <button id="user-btn" class="user-btn" aria-label="Account"></button>
+  </header>
+
+  <main class="layout" role="main">
+    <section class="exercise-grid" id="saved-grid" aria-live="polite"></section>
+  </main>
+
+  <script defer src="auth.js"></script>
+  <script defer src="saved-workouts.js" type="module"></script>
+</body>
+</html>

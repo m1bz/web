@@ -1,21 +1,36 @@
 // public/generate-workout.js
+// ============================================================
+//  Spartacus – Generate Workout page
+//  • Auth-guard: redirect guests to login.html
+//  • Adds “Save Workout” button -> /api/save-workout
+//  • Keeps original SVG-selection, filter, and card rendering
+// ============================================================
 
+/* ---------- 0.  AUTH GUARD (module-level await) ---------- */
+const meRes = await fetch('/api/me', { credentials: 'same-origin' });
+if (meRes.status !== 200) {
+  location.href = 'login.html';
+  throw new Error('Not logged in – redirecting');
+}
 
+/* ---------- 1.  CONSTANTS ---------- */
 const EXERCISE_URL = 'exercises.json';
 const SVG_SELECTOR = 'g.clickable';
 
-/* ---------- DOM refs ---------- */
+/* ---------- 2.  DOM REFERENCES ---------- */
 const $filters      = document.querySelector('.filters .controls');
 const $generateBtn  = document.getElementById('generate-btn');
+const $saveBtn      = document.getElementById('save-btn');
 const $output       = document.getElementById('workout-output');
 
-/* ---------- app state ---------- */
+/* ---------- 3.  STATE ---------- */
 let exercises       = [];                 // flat array of all exercises
 let selectedMuscles = new Set();          // which muscles the user clicked
 const filterState   = new Map();          // Map<attributeName, Set<selectedValues>>
+let lastWorkout     = [];                 // store the last generated exercises
 
 /* ============================================================
-   1.  FETCH + FLATTEN DATA, THEN BUILD FILTER UI
+   4.  FETCH + FLATTEN DATA, THEN BUILD FILTER UI
    ============================================================ */
 fetch(EXERCISE_URL)
   .then(res => {
@@ -26,43 +41,38 @@ fetch(EXERCISE_URL)
     /* flatten & normalize exactly as in main.js */
     exercises = Object.entries(data).flatMap(([muscle, bucket]) =>
       (bucket.exercises || []).map(ex => {
-        const type    = ex.equipment?.type?.toLowerCase()   || 'unknown';
-        const subtype = ex.equipment?.subtype?.toLowerCase()|| null;
+        const type    = ex.equipment?.type?.toLowerCase()    || 'unknown';
+        const subtype = ex.equipment?.subtype?.toLowerCase() || null;
 
         return {
           ...ex,
-          muscle: muscle.toLowerCase(),
-          equipmentType:  type,           // parent
-          equipmentSub:   subtype,        // child (may be null)
-          equipmentLabel: subtype || type
+          muscle          : muscle.toLowerCase(),
+          equipmentType   : type,          // parent
+          equipmentSub    : subtype,       // child (may be null)
+          equipmentLabel  : subtype || type
         };
       })
     );
 
     console.log(`✅ loaded ${exercises.length} exercises`);
 
-    /* Now that we have "exercises", build filters dynamically */
+    /* Now that we have exercises, build filters dynamically */
     buildFilters();
     initSvgSelection();
   })
   .catch(err => {
     console.error(err);
-    $output.innerHTML = '<p style="color: red;">Could not load exercise data.</p>';
+    $output.innerHTML = '<p style="color:red;">Could not load exercise data.</p>';
   });
 
 /* ============================================================
-   2.  DYNAMIC FILTER-BUILDING (based on entire dataset)
+   5.  DYNAMIC FILTER-BUILDING (based on entire dataset)
    ============================================================ */
 function buildFilters() {
-  // Clear any existing filter UI
-  // (We know .controls only has the button by design at this point)
+  // Clear any existing filter UI (we know .controls only has the buttons)
   $filters.querySelectorAll('.filter-group').forEach(node => node.remove());
 
-  // 2.1: Gather every attribute we want to filter on.
-  //     For now, we will:
-  //       • collect all distinct difficulty values,
-  //       • collect all distinct equipment types & subtypes (hierarchical),
-  //       • (You can extend to more attributes later, e.g. “secondary_muscles”)
+  // 5.1: Gather every attribute we want to filter on.
   const attrMap   = new Map();    // attrName -> Set of unique values
   const equipTree = new Map();    // equipmentType -> Set(subtypes)
 
@@ -87,8 +97,7 @@ function buildFilters() {
     }
   });
 
-  // 2.2: For each attribute in attrMap, render a filter-group
-  //      (We skip 'secondary' for this page, but you could add it if desired.)
+  // 5.2: For each attribute in attrMap, render a filter-group
   attrMap.forEach((valueSet, attr) => {
     const values = Array.from(valueSet).sort();
     const $group = document.createElement('div');
@@ -109,9 +118,9 @@ function buildFilters() {
     values.forEach(val => {
       // If this val is a parent equipment type, parent = ''
       // Otherwise, we find its parent in equipTree
-      const isParent    = equipTree.has(val);
-      const parent      = isParent ? '' : findParent(val, equipTree);
-      const id          = `${attr}-${slug(val)}`;
+      const isParent = equipTree.has(val);
+      const parent   = isParent ? '' : findParent(val, equipTree);
+      const id       = `${attr}-${slug(val)}`;
 
       const $label = document.createElement('label');
       $label.className = 'filter-item';
@@ -131,7 +140,7 @@ function buildFilters() {
     $group.appendChild($title);
     $group.appendChild($body);
 
-    // Insert each filter-group *before* the Generate button
+    // Insert each filter-group before the buttons
     $filters.insertBefore($group, $generateBtn);
 
     // Hook up change listener on all checkboxes in this group
@@ -179,7 +188,7 @@ function onFilterChange(e) {
 }
 
 /* ============================================================
-   3.  SVG INTERACTION (multiple-select)
+   6.  SVG INTERACTION (multiple-select)
    ============================================================ */
 function initSvgSelection() {
   document.querySelectorAll(SVG_SELECTOR).forEach($g => {
@@ -211,7 +220,7 @@ function initSvgSelection() {
 }
 
 /* ============================================================
-   4.  GENERATE WORKOUT ON BUTTON CLICK
+   7.  GENERATE WORKOUT ON BUTTON CLICK
    ============================================================ */
 $generateBtn.addEventListener('click', () => {
   if (!selectedMuscles.size) {
@@ -221,6 +230,7 @@ $generateBtn.addEventListener('click', () => {
 
   // Clear previous output
   $output.innerHTML = '';
+  lastWorkout = [];
 
   const cards = [];
   selectedMuscles.forEach(muscle => {
@@ -251,7 +261,6 @@ $generateBtn.addEventListener('click', () => {
           }
         }
       }
-
       return true;
     });
 
@@ -259,15 +268,55 @@ $generateBtn.addEventListener('click', () => {
       cards.push(notFoundCard(muscle));
     } else {
       const chosen = pool[Math.floor(Math.random() * pool.length)];
+      lastWorkout.push(chosen);  // store for saving
       cards.push(renderCard(chosen));
     }
   });
 
   $output.innerHTML = cards.join('');
+  $saveBtn.disabled = !lastWorkout.length;
 });
 
 /* ============================================================
-   helpers
+   8.  SAVE WORKOUT BUTTON
+   ============================================================ */
+$saveBtn.addEventListener('click', async () => {
+  if (!lastWorkout.length) return;
+
+  const defaultName = `Workout ${new Date().toLocaleDateString()}`;
+  const name = prompt('Name this workout:', defaultName);
+  if (!name) return;
+
+  const payload = {
+    name,
+    exercises: lastWorkout,
+    bodyParts: Array.from(selectedMuscles),
+  };
+
+  try {
+    const res = await fetch('/api/save-workout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify(payload),
+    });
+    if (res.ok) {
+      alert('Workout saved!');
+      $saveBtn.disabled = true;
+    } else if (res.status === 401) {
+      alert('You must be logged in to save workouts.');
+      location.href = 'login.html';
+    } else {
+      alert('Error saving workout.');
+    }
+  } catch (err) {
+    console.error(err);
+    alert('Error saving workout.');
+  }
+});
+
+/* ============================================================
+   HELPERS
    ============================================================ */
 function renderCard(ex) {
   const equipLabel = ex.equipmentSub || ex.equipmentType || 'Unknown';
@@ -300,7 +349,6 @@ function displayName(key) {
   return key.charAt(0).toUpperCase() + key.slice(1);
 }
 
-/* Find the parent equipment type in equipTree for a given subtype */
 function findParent(sub, tree) {
   for (const [type, kids] of tree) {
     if (kids.has(sub)) return type;

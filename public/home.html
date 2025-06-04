@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spartacus · Home</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="header" role="banner">
+    <a href="home.html" class="logo-link">
+      <img src="logo.jpeg" alt="Spartacus" class="logo-img">
+      <span class="logo-text">Spartacus</span>
+    </a>
+    <h1 style="font-size:1.4rem;font-weight:700">Home</h1>
+    <button id="user-btn" class="user-btn" aria-label="Account"></button>
+  </header>
+
+  <main class="layout" role="main" style="grid-template-columns:1fr;">
+    <section style="display:flex;flex-direction:column;gap:1rem;padding:2rem;">
+      <a class="btn-primary" href="index.html">Explore Exercises</a>
+      <a class="btn-secondary" href="generate-workout.html">Generate Workout (login)</a>
+      <a class="btn-secondary" href="saved-workouts.html">My Saved Workouts (login)</a>
+      <a class="btn-secondary" href="login.html">Login / Register</a>
+    </section>
+  </main>
+
+  <script defer src="auth.js"></script>
+</body>
+</html>

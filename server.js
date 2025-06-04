@@ -20,7 +20,7 @@ function getContentType (ext) {
     ".jpg" : "image/jpeg",
     ".jpeg": "image/jpeg",
     ".gif" : "image/gif",
-    ".svg" : "image/svg+xml",
+    ".svg" : "image/svgxml",
   };
   return map[ext] || "text/plain";
 }
@@ -34,7 +34,7 @@ function parseCookies (req) {
     const idx = kv.indexOf("=");
     if (idx > -1) {
       const k = kv.slice(0, idx).trim();
-      const v = kv.slice(idx + 1).trim();
+      const v = kv.slice(idx +  1).trim();
       acc[k] = decodeURIComponent(v);
     }
     return acc;
@@ -47,7 +47,7 @@ function parseCookies (req) {
 function readBody (req) {
   return new Promise((resolve, reject) => {
     let data = "";
-    req.on("data", chunk => (data += chunk));
+    req.on("data", chunk => (data = chunk));
     req.on("end",  () => {
       try {
         resolve(data ? JSON.parse(data) : {});
@@ -247,6 +247,41 @@ const server = http.createServer(async (req, res) => {
     }
     clearSessionCookie(res);
     res.writeHead(204); return res.end();
+  }
+    /* ---------------- API: POST /api/save-workout -------- */
+  if (req.method === "POST" && parsed.pathname === "/api/save-workout") {
+    if (!userId) { res.writeHead(401); return res.end(); }
+    try {
+      const { name, exercises, bodyParts } = await readBody(req);
+      await database.query(
+        `INSERT INTO saved_workouts (user_id, name, workout_data, body_parts_worked, created_at)
+         VALUES ($1, $2, $3, $4, NOW())`,
+        [userId, name, JSON.stringify(exercises), bodyParts]
+      );
+      await database.query(
+        `INSERT INTO workouts (user_id, name) VALUES ($1, $2)`,
+        [userId, name]
+      );
+      res.writeHead(201); return res.end();
+    } catch (err) {
+      console.error(err); res.writeHead(500); return res.end();
+    }
+  }
+
+  /* ---------------- API: GET /api/saved-workouts ------- */
+  if (req.method === "GET" && parsed.pathname === "/api/saved-workouts") {
+    if (!userId) { res.writeHead(401); return res.end(); }
+    try {
+      const { rows } = await database.query(
+        `SELECT id, name, workout_data, created_at, body_parts_worked
+         FROM saved_workouts WHERE user_id=$1 ORDER BY created_at DESC`,
+        [userId]
+      );
+      res.writeHead(200, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify(rows));
+    } catch (err) {
+      console.error(err); res.writeHead(500); return res.end();
+    }
   }
 
   /* ---------------- GET /exercises.json ---------------- */

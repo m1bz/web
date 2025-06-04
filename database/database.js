@@ -112,6 +112,7 @@ class Database {
         CREATE TABLE IF NOT EXISTS saved_workouts (
           id               SERIAL PRIMARY KEY,
           user_id          INT REFERENCES users(id) ON DELETE CASCADE,
+          name VARCHAR NOT NULL,
           workout_data     JSONB       NOT NULL,
           created_at       TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
           body_parts_worked VARCHAR[]
