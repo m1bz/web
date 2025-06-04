@@ -1,0 +1,200 @@
+-- 1. Improved ENUM types (fixed trailing comma + added new enums)
+CREATE TYPE gender_enum AS ENUM ('male', 'female', 'other');
+CREATE TYPE difficulty_enum AS ENUM ('beginner', 'novice', 'intermediate', 'advanced');
+
+
+
+-- 3. Enhanced muscles table
+CREATE TABLE IF NOT EXISTS muscle_groups (
+    name VARCHAR PRIMARY KEY
+);
+
+-- 4. Users table (added health tracking)
+CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_login TIMESTAMP,
+    is_admin BOOLEAN DEFAULT FALSE,
+);
+
+-- 5. Profiles table with health relations
+CREATE TABLE IF NOT EXISTS profiles (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+    gender gender_enum,
+    age INT CHECK (age BETWEEN 5 AND 120),
+    weight FLOAT CHECK (weight > 0),
+    height FLOAT CHECK (height > 0),
+);
+
+
+-- 7. Enhanced exercises table
+CREATE TABLE IF NOT EXISTS exercises (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    primary_muscle VARCHAR(50) NOT NULL REFERENCES muscle_groups(name),
+    secondary_muscles VARCHAR(50)[],
+    difficulty difficulty_enum NOT NULL,
+    equipment_type VARCHAR(50) NOT NULL,
+    equipment_subtype VARCHAR(50),
+    instructions TEXT NOT NULL,
+    media_urls TEXT[],  -- Array for photo/video URLs
+    
+    CONSTRAINT valid_secondary_muscles 
+        CHECK (secondary_muscles IS NULL OR 
+               secondary_muscles <@ ARRAY(SELECT name FROM muscle_groups))
+);
+
+-- 8. Workouts with preferences
+CREATE TABLE IF NOT EXISTS workouts (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    duration INT CHECK (duration > 0),  -- in minutes
+    target_muscles VARCHAR(50)[]  -- User's muscle preferences
+);
+
+-- 9. Workout exercises (added order and customization)
+CREATE TABLE IF NOT EXISTS workout_exercises (
+    id SERIAL PRIMARY KEY,  -- Added for easier management
+    workout_id INT NOT NULL REFERENCES workouts(id) ON DELETE CASCADE,
+    exercise_id INT NOT NULL REFERENCES exercises(id),
+    sets INT NOT NULL CHECK (sets > 0),
+    reps INT NOT NULL CHECK (reps > 0),
+    rest_interval INT,  -- in seconds
+    order_index INT NOT NULL,  -- For sequencing exercises
+    custom_instructions TEXT,  -- User-specific modifications
+    UNIQUE (workout_id, order_index)
+);
+
+-- 10. Workout completion tracking (added performance metrics)
+CREATE TABLE IF NOT EXISTS completed_workouts (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    workout_id INT NOT NULL REFERENCES workouts(id),
+    completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    perceived_difficulty INT CHECK (perceived_difficulty BETWEEN 1 AND 5),
+);
+
+-- 11. Statistics with age groups
+CREATE TABLE IF NOT EXISTS user_statistics (
+    user_id INT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    completed_workouts_lifetime INT DEFAULT 0,
+    completed_workouts_lastyear INT DEFAULT 0,
+    completed_workouts_lastmonth INT DEFAULT 0,
+    completed_workouts_lastweek INT DEFAULT 0,
+    last_updated TIMESTAMP,
+    age_group VARCHAR(20) GENERATED ALWAYS AS (
+        CASE 
+            WHEN (SELECT age FROM profiles p WHERE p.user_id = user_id) < 18 THEN 'under_18'
+            WHEN (SELECT age FROM profiles p WHERE p.user_id = user_id) BETWEEN 18 AND 30 THEN '18_30'
+            WHEN (SELECT age FROM profiles p WHERE p.user_id = user_id) BETWEEN 31 AND 50 THEN '31_50'
+            ELSE 'over_50'
+        END
+    ) STORED
+);
+
+-- 12. Leaderboard system
+CREATE TABLE IF NOT EXISTS leaderboards (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    criteria VARCHAR(50) NOT NULL,  -- 'weekly', 'monthly', 'by_age', 'by_type'
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS leaderboard_entries (
+    leaderboard_id INT NOT NULL REFERENCES leaderboards(id) ON DELETE CASCADE,
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    score INT NOT NULL,
+    rank INT,
+    PRIMARY KEY (leaderboard_id, user_id)
+);
+
+-- 13. RSS feeds table
+CREATE TABLE IF NOT EXISTS user_rss_feeds (
+    user_id INT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    feed_url TEXT NOT NULL UNIQUE,
+    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 14. Trigger improvements
+-- Auto-create profile and stats
+CREATE OR REPLACE FUNCTION create_user_profile()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO profiles (user_id) VALUES (NEW.id);
+    INSERT INTO user_statistics (user_id) VALUES (NEW.id);
+    INSERT INTO user_rss_feeds (user_id, feed_url) 
+    VALUES (NEW.id, 'https://api.example.com/rss/' || NEW.id);
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Improved statistics trigger (handles updates/deletes)
+CREATE OR REPLACE FUNCTION update_workout_stats()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF (TG_OP = 'INSERT') THEN
+        UPDATE user_statistics
+        SET 
+            completed_workouts_lifetime = completed_workouts_lifetime + 1,
+            completed_workouts_lastyear = completed_workouts_lastyear + 1,
+            completed_workouts_lastmonth = completed_workouts_lastmonth + 1,
+            completed_workouts_lastweek = completed_workouts_lastweek + 1,
+            last_updated = CURRENT_TIMESTAMP
+        WHERE user_id = NEW.user_id;
+        
+    ELSIF (TG_OP = 'DELETE') THEN
+        UPDATE user_statistics
+        SET 
+            completed_workouts_lifetime = GREATEST(0, completed_workouts_lifetime - 1),
+            completed_workouts_lastyear = GREATEST(0, completed_workouts_lastyear - 
+                CASE WHEN OLD.completed_at >= CURRENT_DATE - INTERVAL '1 year' THEN 1 ELSE 0 END),
+            completed_workouts_lastmonth = GREATEST(0, completed_workouts_lastmonth - 
+                CASE WHEN OLD.completed_at >= CURRENT_DATE - INTERVAL '1 month' THEN 1 ELSE 0 END),
+            completed_workouts_lastweek = GREATEST(0, completed_workouts_lastweek - 
+                CASE WHEN OLD.completed_at >= CURRENT_DATE - INTERVAL '1 week' THEN 1 ELSE 0 END),
+            last_updated = CURRENT_TIMESTAMP
+        WHERE user_id = OLD.user_id;
+    END IF;
+    
+    RETURN COALESCE(NEW, OLD);
+END;
+$$ LANGUAGE plpgsql;
+
+-- 15. New trigger for leaderboard updates
+CREATE OR REPLACE FUNCTION update_leaderboards()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Refresh weekly leaderboard
+    UPDATE leaderboard_entries le
+    SET score = us.completed_workouts_lastweek,
+        rank = RANK() OVER (ORDER BY us.completed_workouts_lastweek DESC)
+    FROM user_statistics us
+    WHERE le.leaderboard_id = (SELECT id FROM leaderboards WHERE name = 'Weekly Workouts')
+      AND le.user_id = us.user_id;
+      
+    -- Similar logic for other leaderboards...
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger assignments
+CREATE TRIGGER trigger_create_profile
+AFTER INSERT ON users
+FOR EACH ROW
+EXECUTE FUNCTION create_user_profile();
+
+CREATE TRIGGER trigger_update_stats
+AFTER INSERT OR DELETE ON completed_workouts
+FOR EACH ROW
+EXECUTE FUNCTION update_workout_stats();
+
+CREATE TRIGGER trigger_update_leaderboards
+AFTER UPDATE ON user_statistics
+FOR EACH STATEMENT
+EXECUTE FUNCTION update_leaderboards();

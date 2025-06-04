@@ -1,3 +1,6 @@
+// public/generate-workout.js
+
+
 const EXERCISE_URL = 'exercises.json';
 const SVG_SELECTOR = 'g.clickable';
 

@@ -1,6 +1,5 @@
 
-//config\config.js 
-
+// config/config.js
 
 const config = {
     server: {

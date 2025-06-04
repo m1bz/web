@@ -1,4 +1,4 @@
-// public\main.js
+// public/main.js
 
 const EXERCISE_URL  = 'exercises.json';
 const SVG_SELECTOR  = 'g.clickable';

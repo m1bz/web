@@ -1,176 +1,298 @@
-// server.js
-const http = require('http');
-const fs = require('fs').promises;
-const path = require('path');
-const url = require('url');
-const config = require('./config/config');
-const database = require('./database/database');
+// server.js – complete, self‑contained file with auth & static handling
 
-class Server {
-  constructor() {
-    this.server = null;
-  }
+const http       = require("http");
+const fs         = require("fs").promises;
+const path       = require("path");
+const url        = require("url");
+const config     = require("./config/config");
+const database   = require("./database/database");
 
-  getContentType(ext) {
-    const types = {
-      '.html': 'text/html',
-      '.css': 'text/css',
-      '.js': 'application/javascript',
-      '.json': 'application/json',
-      '.png': 'image/png',
-      '.jpg': 'image/jpeg',
-      '.jpeg': 'image/jpeg',
-      '.gif': 'image/gif',
-      '.svg': 'image/svg+xml',
-    };
-    return types[ext] || 'text/plain';
-  }
+/* -------------------------------------------------------------
+   Helper: MIME type lookup
+----------------------------------------------------------------*/
+function getContentType (ext) {
+  const map = {
+    ".html": "text/html",
+    ".css" : "text/css",
+    ".js"  : "application/javascript",
+    ".json": "application/json",
+    ".png" : "image/png",
+    ".jpg" : "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".gif" : "image/gif",
+    ".svg" : "image/svg+xml",
+  };
+  return map[ext] || "text/plain";
+}
 
-  // ─── Serve static files (unchanged) ─────────────────────────────────────────────────
-  async serveStatic(req, res) {
-    const parsed = url.parse(req.url);
-    const filePath = parsed.pathname === '/' ? 'index.html' : parsed.pathname.slice(1);
-    const fullPath = path.join(__dirname, 'public', filePath);
-
-    try {
-      const data = await fs.readFile(fullPath);
-      const ext = path.extname(fullPath);
-      const contentType = this.getContentType(ext);
-      res.writeHead(200, { 'Content-Type': contentType });
-      res.end(data);
-    } catch (err) {
-      res.writeHead(404, { 'Content-Type': 'text/plain' });
-      res.end('Not Found');
+/* -------------------------------------------------------------
+   Helper: simple cookie parser
+----------------------------------------------------------------*/
+function parseCookies (req) {
+  const raw = req.headers.cookie || "";
+  return raw.split("; ").reduce((acc, kv) => {
+    const idx = kv.indexOf("=");
+    if (idx > -1) {
+      const k = kv.slice(0, idx).trim();
+      const v = kv.slice(idx + 1).trim();
+      acc[k] = decodeURIComponent(v);
     }
-  }
+    return acc;
+  }, {});
+}
 
-  // ─── New: Serve /exercises.json by querying Postgres ─────────────────────────────────
-  async serveExercisesFromDb(req, res) {
-    try {
-      // 1) Fetch all exercises rows
-      const result = await database.query(`
-        SELECT
-          name,
-          primary_muscle,
-          secondary_muscles,
-          difficulty,
-          equipment_type,
-          equipment_subtype,
-          instructions
-        FROM exercises
-      `);
-
-      
-      const rows = result.rows;
-      const out = {};
-
-      for (const row of rows) {
-        const muscleKey = row.primary_muscle; 
-        if (!out[muscleKey]) {
-          out[muscleKey] = { exercises: [] };
-        }
-
-        out[muscleKey].exercises.push({
-          name: row.name,
-          primary_muscle: row.primary_muscle,
-          secondary_muscles: row.secondary_muscles,
-          difficulty: row.difficulty,
-          equipment: {
-            type: row.equipment_type,
-            subtype: row.equipment_subtype
-          },
-          instructions: row.instructions
-        });
-      }
-
-      // 3) Send it as JSON
-      const body = JSON.stringify(out);
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(body);
-    } catch (err) {
-      console.error('Error querying exercises from DB:', err);
-      res.writeHead(500, { 'Content-Type': 'text/plain' });
-      res.end('Internal Server Error');
-    }
-  }
-
-  // ─── Main request handler (adjusted) ───────────────────────────────────────────────
-  async handleRequest(req, res) {
-    // 1) Handle CORS preflight exactly as before
-    if (req.method === 'OPTIONS') {
-      res.writeHead(200, {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      });
-      return res.end();
-    }
-
-    // 2) If client is GET /exercises.json, serve from Postgres
-    const parsed = url.parse(req.url);
-    if (req.method === 'GET' && parsed.pathname === '/exercises.json') {
-      return this.serveExercisesFromDb(req, res);
-    }
-
-    // 3) Otherwise, if GET any other path, serve static from /public
-    if (req.method === 'GET') {
-      return this.serveStatic(req, res);
-    }
-
-    // 4) Anything else is 405
-    res.writeHead(405, { 'Content-Type': 'text/plain' });
-    res.end('Method Not Allowed');
-  }
-
-  // ─── Server start/stop logic (mostly unchanged) ───────────────────────────────────
-  async start() {
-    try {
+/* -------------------------------------------------------------
+   Helper: read request body (JSON only)
+----------------------------------------------------------------*/
+function readBody (req) {
+  return new Promise((resolve, reject) => {
+    let data = "";
+    req.on("data", chunk => (data += chunk));
+    req.on("end",  () => {
       try {
-        await database.connect();
-        console.log('Database connected successfully');
-      } catch (dbErr) {
-        console.log('Database connection failed, but server will continue (no-DB mode)');
-        console.log('Database error:', dbErr.message);
+        resolve(data ? JSON.parse(data) : {});
+      } catch (err) {
+        reject(err);
       }
+    });
+  });
+}
 
-      this.server = http.createServer(this.handleRequest.bind(this));
-      this.server.listen(config.server.port, config.server.host, () => {
-        console.log(`Server running at ${config.server.baseUrl}`);
-        console.log(`Serving static files from: ${path.join(__dirname, 'public')}`);
-      });
-    } catch (err) {
-      console.error('Failed to start server:', err);
-      process.exit(1);
-    }
-  }
+/* -------------------------------------------------------------
+   Static file server (from /public)
+----------------------------------------------------------------*/
+async function serveStatic (req, res) {
+  const parsed   = url.parse(req.url);
+  const filePath = parsed.pathname === "/" ? "index.html" : parsed.pathname.slice(1);
+  const fullPath = path.join(__dirname, "public", filePath);
 
-  async stop() {
-    if (this.server) {
-      this.server.close();
-      console.log('HTTP server stopped');
-    }
-
-    try {
-      await database.disconnect();
-      console.log('Database disconnected');
-    } catch (err) {
-      console.error('Error during database disconnect:', err);
-    }
+  try {
+    const data = await fs.readFile(fullPath);
+    res.writeHead(200, { "Content-Type": getContentType(path.extname(fullPath)) });
+    res.end(data);
+  } catch {
+    res.writeHead(404, { "Content-Type": "text/plain" });
+    res.end("Not Found");
   }
 }
 
-const server = new Server();
+/* -------------------------------------------------------------
+   Generate exercises.json directly from DB
+----------------------------------------------------------------*/
+async function serveExercisesJson (res) {
+  try {
+    const { rows } = await database.query(`
+      SELECT
+        name,
+        primary_muscle,
+        secondary_muscles,
+        difficulty,
+        equipment_type,
+        equipment_subtype,
+        instructions
+      FROM exercises`);
 
-process.on('SIGINT', async () => {
-  console.log('Received SIGINT. Shutting down gracefully...');
-  await server.stop();
-  process.exit(0);
+    // transform rows => { muscle: { exercises: [] } }
+    const out = {};
+    for (const row of rows) {
+      const m = row.primary_muscle;
+      out[m] ??= { exercises: [] };
+      out[m].exercises.push({
+        name: row.name,
+        primary_muscle: row.primary_muscle,
+        secondary_muscles: row.secondary_muscles,
+        difficulty: row.difficulty,
+        equipment: {
+          type: row.equipment_type,
+          subtype: row.equipment_subtype,
+        },
+        instructions: row.instructions,
+      });
+    }
+
+    const body = JSON.stringify(out);
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(body);
+  } catch (err) {
+    console.error("Error querying exercises:", err);
+    res.writeHead(500, { "Content-Type": "text/plain" });
+    res.end("Internal Server Error");
+  }
+}
+
+/* -------------------------------------------------------------
+   Auth utilities
+----------------------------------------------------------------*/
+function setSessionCookie (res, userId) {
+  // simple unsigned cookie; for prod add HttpOnly/Secure over HTTPS
+  const cookie = `sid=${userId}; Path=/; SameSite=Strict; Max-Age=2592000`; // 30 days
+  res.setHeader("Set-Cookie", cookie);
+}
+
+function clearSessionCookie (res) {
+  res.setHeader("Set-Cookie", "sid=; Path=/; Max-Age=0; SameSite=Strict");
+}
+
+/* -------------------------------------------------------------
+   Main HTTP server
+----------------------------------------------------------------*/
+const server = http.createServer(async (req, res) => {
+  // Allow CORS / pre‑flight for fetch() in dev
+  if (req.method === "OPTIONS") {
+    res.writeHead(200, {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+    });
+    return res.end();
+  }
+
+  const parsed = url.parse(req.url);
+  const cookies = parseCookies(req);
+  const userId  = cookies.sid;
+
+  /* ---------------- API: GET /api/me ------------------ */
+  if (req.method === "GET" && parsed.pathname === "/api/me") {
+    if (!userId) {
+      res.writeHead(204); // no content, not logged
+      return res.end();
+    }
+
+    try {
+      const { rows } = await database.query(
+        "SELECT id, username FROM users WHERE id=$1 AND is_logged_in=TRUE",
+        [userId]
+      );
+      if (!rows.length) {
+        clearSessionCookie(res);
+        res.writeHead(204);
+        return res.end();
+      }
+      res.writeHead(200, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify(rows[0]));
+    } catch (err) {
+      console.error(err);
+      res.writeHead(500); return res.end();
+    }
+  }
+
+  /* ---------------- API: POST /api/register ------------ */
+  if (req.method === "POST" && parsed.pathname === "/api/register") {
+    try {
+      const { username, email, password } = await readBody(req);
+      if (!username || !email || !password) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        return res.end(JSON.stringify({ message: "Missing fields" }));
+      }
+
+      const result = await database.query(
+        `INSERT INTO users (username, email, password, is_logged_in)
+         VALUES ($1, $2, $3, TRUE)
+         RETURNING id, username`,
+        [username, email, password]
+      );
+      const user = result.rows[0];
+
+      await database.query(
+        `INSERT INTO profiles (user_id) VALUES ($1)`,
+        [user.id]
+      );
+
+      setSessionCookie(res, user.id);
+      res.writeHead(201, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify(user));
+    } catch (err) {
+      if (err.code === "23505") { // unique_violation
+        res.writeHead(409, { "Content-Type": "application/json" });
+        return res.end(JSON.stringify({ message: "Email already exists" }));
+      }
+      console.error(err);
+      res.writeHead(500); return res.end();
+    }
+  }
+
+  /* ---------------- API: POST /api/login --------------- */
+  if (req.method === "POST" && parsed.pathname === "/api/login") {
+    try {
+      const { email, password } = await readBody(req);
+      const { rows } = await database.query(
+        `SELECT id, username FROM users WHERE email=$1 AND password=$2`,
+        [email, password]
+      );
+      if (!rows.length) {
+        res.writeHead(401, { "Content-Type": "application/json" });
+        return res.end(JSON.stringify({ message: "Invalid credentials" }));
+      }
+
+      const user = rows[0];
+      await database.query(
+        `UPDATE users SET is_logged_in=TRUE, last_login=NOW() WHERE id=$1`,
+        [user.id]
+      );
+
+      setSessionCookie(res, user.id);
+      res.writeHead(200, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify(user));
+    } catch (err) {
+      console.error(err);
+      res.writeHead(500); return res.end();
+    }
+  }
+
+  /* ---------------- API: POST /api/logout -------------- */
+  if (req.method === "POST" && parsed.pathname === "/api/logout") {
+    if (userId) {
+      try { await database.query("UPDATE users SET is_logged_in=FALSE WHERE id=$1", [userId]); }
+      catch (err) { console.error(err); }
+    }
+    clearSessionCookie(res);
+    res.writeHead(204); return res.end();
+  }
+
+  /* ---------------- GET /exercises.json ---------------- */
+  if (req.method === "GET" && parsed.pathname === "/exercises.json") {
+    return serveExercisesJson(res);
+  }
+
+  /* ---------------- Static files ----------------------- */
+  if (req.method === "GET") {
+    return serveStatic(req, res);
+  }
+
+  /* ---------------- Fallback --------------------------- */
+  res.writeHead(405, { "Content-Type": "text/plain" });
+  res.end("Method Not Allowed");
 });
 
-process.on('SIGTERM', async () => {
-  console.log('Received SIGTERM. Shutting down gracefully...');
-  await server.stop();
-  process.exit(0);
-});
+/* -------------------------------------------------------------
+   Boot sequence
+----------------------------------------------------------------*/
+(async () => {
+  try {
+    try {
+      await database.connect();
+    } catch (dbErr) {
+      console.error("Database connection failed (running in no‑DB mode):", dbErr.message);
+    }
 
-server.start();
+    server.listen(config.server.port, config.server.host, () => {
+      console.log(`Server running at ${config.server.baseUrl}`);
+    });
+  } catch (err) {
+    console.error("Failed to start server:", err);
+    process.exit(1);
+  }
+})();
+
+/* -------------------------------------------------------------
+   Graceful shutdown
+----------------------------------------------------------------*/
+async function shutdown () {
+  console.log("Shutting down …");
+  server.close(() => console.log("HTTP server stopped"));
+  try { await database.disconnect(); } catch {}
+  process.exit(0);
+}
+
+process.on("SIGINT",  shutdown);
+process.on("SIGTERM", shutdown);

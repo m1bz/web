@@ -1,5 +1,8 @@
+
+// database/database.js
+
 const { Client } = require('pg');
-const config = require('../config/config');
+const config     = require('../config/config');
 
 class Database {
   constructor() {
@@ -9,28 +12,21 @@ class Database {
 
   /* ─────────────────────────────────────────────────────────── */
   async connect() {
-    try {
-      /* use DATABASE_URL if supplied, otherwise individual params */
-      const connectionConfig = config.database.connectionString
-        ? { connectionString: config.database.connectionString }
-        : {
-            host:     config.database.host,
-            port:     config.database.port,
-            database: config.database.database,
-            user:     config.database.user,
-            password: config.database.password,
-          };
+    const connectionConfig = config.database.connectionString
+      ? { connectionString: config.database.connectionString }
+      : {
+          host    : config.database.host,
+          port    : config.database.port,
+          database: config.database.database,
+          user    : config.database.user,
+          password: config.database.password
+        };
 
-      this.client = new Client(connectionConfig);
-      await this.client.connect();
-      this.isConnected = true;
-      console.log(`Connected to PostgreSQL database: ${config.database.database}`);
-
-      await this.initializeTables();
-    } catch (error) {
-      console.error('Database connection error:', error);
-      throw error;
-    }
+    this.client = new Client(connectionConfig);
+    await this.client.connect();
+    this.isConnected = true;
+    console.log(`Connected to PostgreSQL → ${config.database.database}`);
+    await this.initializeTables();
   }
 
   /* ─────────────────────────────────────────────────────────── */
@@ -38,70 +34,97 @@ class Database {
     if (this.client && this.isConnected) {
       await this.client.end();
       this.isConnected = false;
-      console.log('Disconnected from PostgreSQL database');
+      console.log('Disconnected from PostgreSQL');
     }
   }
 
   /* ───────────────────────────────────────────────────────────
-     Ensure ALL required tables exist.
-     Muscles & exercises already existed;  workouts tables are NEW
+     Ensure ALL required tables exist
      ─────────────────────────────────────────────────────────── */
   async initializeTables() {
     try {
-      /* -------- muscles -------- */
+      // First, create the custom type if it doesn't exist
       await this.client.query(`
-        CREATE TABLE IF NOT EXISTS muscles (
-          name VARCHAR PRIMARY KEY
-        )
+        DO $$ BEGIN
+          CREATE TYPE gender_enum AS ENUM ('male','female','other');
+        EXCEPTION
+          WHEN duplicate_object THEN null;
+        END $$;
       `);
 
-      /* -------- exercises -------- */
+      // Then create all tables
       await this.client.query(`
+        /* ---------------- users ---------------- */
+        CREATE TABLE IF NOT EXISTS users (
+          id            SERIAL PRIMARY KEY,
+          username      VARCHAR(255)       NOT NULL,
+          email         VARCHAR(255) UNIQUE NOT NULL,
+          password VARCHAR(255)       NOT NULL,
+          created_at    TIMESTAMPTZ        DEFAULT CURRENT_TIMESTAMP,
+          last_login    TIMESTAMPTZ,
+          is_admin      BOOLEAN            DEFAULT FALSE,
+          is_logged_in  BOOLEAN            DEFAULT FALSE
+        );
+
+        /* ---------------- profiles ---------------- */
+        CREATE TABLE IF NOT EXISTS profiles (
+          id        SERIAL PRIMARY KEY,
+          user_id   INT UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+          gender    gender_enum,
+          age       INT    CHECK (age BETWEEN 5 AND 120),
+          weight    FLOAT  CHECK (weight > 0),
+          height    FLOAT  CHECK (height > 0)
+        );
+
+        /* ---------------- muscles ---------------- */
+        CREATE TABLE IF NOT EXISTS muscles (
+          name VARCHAR PRIMARY KEY
+        );
+
+        /* ---------------- exercises ---------------- */
         CREATE TABLE IF NOT EXISTS exercises (
           id               SERIAL PRIMARY KEY,
           name             VARCHAR NOT NULL,
           primary_muscle   VARCHAR NOT NULL REFERENCES muscles(name),
-          secondary_muscles TEXT[] NULL,
+          secondary_muscles TEXT[],
           difficulty       VARCHAR NOT NULL,
           equipment_type   VARCHAR NOT NULL,
           equipment_subtype VARCHAR,
           instructions     TEXT NOT NULL
-        )
-      `);
+        );
 
-      /* =======================================================
-         NEW TABLES FOR GENERATED WORKOUT STORAGE
-         (mock user_id for now – ties workouts to users later)
-         ======================================================= */
-
-      /* master workouts table */
-      await this.client.query(`
+        /* ---------------- workouts / workout_exercises ---------------- */
         CREATE TABLE IF NOT EXISTS workouts (
           id         SERIAL PRIMARY KEY,
-          user_id    INTEGER,
+          user_id    INT REFERENCES users(id) ON DELETE CASCADE,
           name       VARCHAR NOT NULL,
           created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-        )
-      `);
+        );
 
-      /* junction table linking workouts ↔ exercises */
-      await this.client.query(`
         CREATE TABLE IF NOT EXISTS workout_exercises (
           id          SERIAL PRIMARY KEY,
-          workout_id  INTEGER NOT NULL REFERENCES workouts(id)   ON DELETE CASCADE,
-          exercise_id INTEGER NOT NULL REFERENCES exercises(id) ON DELETE CASCADE,
-          position    INTEGER NOT NULL DEFAULT 1                 -- order in workout
-        )
+          workout_id  INT REFERENCES workouts(id)   ON DELETE CASCADE,
+          exercise_id INT REFERENCES exercises(id)  ON DELETE CASCADE,
+          position    INT NOT NULL DEFAULT 1
+        );
+
+        /* ---------------- saved_workouts (JSON snapshot, plus viz) ----- */
+        CREATE TABLE IF NOT EXISTS saved_workouts (
+          id               SERIAL PRIMARY KEY,
+          user_id          INT REFERENCES users(id) ON DELETE CASCADE,
+          workout_data     JSONB       NOT NULL,
+          created_at       TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+          body_parts_worked VARCHAR[]
+        );
       `);
 
-      console.log('Database tables initialized successfully');
+      console.log('✅  All tables verified / created');
     } catch (error) {
-      console.error('Error initializing database tables:', error);
+      console.error('Error initializing tables:', error);
       throw error;
     }
   }
 
-  /* ─────────────────────────────────────────────────────────── */
   async query(text, params) {
     if (!this.isConnected) throw new Error('Database not connected');
     try {
@@ -113,5 +136,4 @@ class Database {
   }
 }
 
-/* export singleton */
 module.exports = new Database();

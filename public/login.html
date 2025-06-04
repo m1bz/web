@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Login · Spartacus Fitness</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="header" role="banner">
+  <a href="index.html" class="logo-link">
+    <img src="logo.jpeg" alt="Spartacus" class="logo-img">
+    <span class="logo-text">Spartacus</span>
+  </a>
+  <h1 style="font-size:1.4rem;font-weight:700">Login</h1>
+  <button id="user-btn" class="user-btn" aria-label="Account"></button>
+</header>
+
+<main class="centered">
+  <form id="login-form" class="auth-form">
+    <h2>Welcome back</h2>
+    <label>Email
+      <input type="email" name="email" required>
+    </label>
+    <label>Password
+      <input type="password" name="password" required>
+    </label>
+    <button type="submit" class="btn-primary">Login</button>
+    <p class="switch-link">No account? <a href="register.html">Register</a></p>
+    <p id="login-error" class="error-msg" hidden></p>
+  </form>
+</main>
+
+<script defer src="auth.js"></script>
+<script defer src="login.js"></script>
+</body>
+</html>
