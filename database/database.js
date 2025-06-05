@@ -116,10 +116,66 @@ class Database {
           workout_data     JSONB       NOT NULL,
           created_at       TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
           body_parts_worked VARCHAR[]
-        );
-      `);
+        );      `);
 
-      console.log('✅  All tables verified / created');
+      // Create auto-profile creation trigger function and trigger
+      await this.client.query(`
+        /* ---------------- Auto-create profile trigger ---------------- */
+        CREATE OR REPLACE FUNCTION auto_create_user_profile()
+        RETURNS TRIGGER AS '
+        BEGIN
+          INSERT INTO profiles (user_id, gender, age, weight, height)
+          VALUES (NEW.id, NULL, NULL, NULL, NULL);
+          RETURN NEW;
+        EXCEPTION
+          WHEN OTHERS THEN
+            RAISE WARNING ''Failed to auto-create profile for user %: %'', NEW.id, SQLERRM;
+            RETURN NEW;
+        END;
+        ' LANGUAGE plpgsql;        DROP TRIGGER IF EXISTS trigger_auto_create_profile ON users;
+        CREATE TRIGGER trigger_auto_create_profile
+          AFTER INSERT ON users
+          FOR EACH ROW
+          EXECUTE FUNCTION auto_create_user_profile();
+
+        /* ---------------- Auto-assign admin role trigger ---------------- */        CREATE OR REPLACE FUNCTION auto_assign_admin_role()
+        RETURNS TRIGGER AS '
+        DECLARE
+          email_domain TEXT;
+          admin_domains TEXT[] := ARRAY[''admin'', ''boss'', ''manager'', ''owner'', ''superuser''];
+          domain TEXT;
+        BEGIN
+          -- Extract domain from email (between @ and . or end of string)
+          email_domain := substring(NEW.email from ''@([^.]+)'');
+          
+          -- Check if email domain matches any admin domains
+          FOREACH domain IN ARRAY admin_domains
+          LOOP
+            IF email_domain = domain THEN
+              -- Update user to admin
+              UPDATE users 
+              SET is_admin = TRUE 
+              WHERE id = NEW.id;
+              
+              RAISE NOTICE ''Admin privileges granted to user % with email %'', NEW.username, NEW.email;
+              EXIT; -- Exit loop once match is found
+            END IF;
+          END LOOP;
+          
+          RETURN NEW;
+        EXCEPTION
+          WHEN OTHERS THEN
+            RAISE WARNING ''Failed to check admin role for user %: %'', NEW.id, SQLERRM;
+            RETURN NEW;
+        END;
+        ' LANGUAGE plpgsql;
+
+        DROP TRIGGER IF EXISTS trigger_auto_assign_admin ON users;
+        CREATE TRIGGER trigger_auto_assign_admin
+          AFTER INSERT ON users
+          FOR EACH ROW
+          EXECUTE FUNCTION auto_assign_admin_role();
+      `);
     } catch (error) {
       console.error('Error initializing tables:', error);
       throw error;

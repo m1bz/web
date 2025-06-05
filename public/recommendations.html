@@ -1,0 +1,140 @@
+<!-- public/recommendations.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Workout Recommendations · Spartacus</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .recommendation-section {
+      margin: 2rem 0;
+      padding: 1.5rem;
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+    }
+    .recommendation-header {
+      color: var(--brand);
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+    .stat-card {
+      background: var(--background);
+      padding: 1rem;
+      border-radius: var(--radius);
+      text-align: center;
+    }
+    .stat-number {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--brand);
+    }
+    .stat-label {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+    .exercise-recommendation {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem;
+      margin: 0.5rem 0;
+      background: var(--background);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+    }
+    .exercise-info h4 {
+      margin: 0 0 0.5rem 0;
+      color: var(--text);
+    }
+    .exercise-meta {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+    .usage-badge {
+      background: var(--brand);
+      color: white;
+      padding: 0.25rem 0.75rem;
+      border-radius: 1rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .muscle-group-tag {
+      display: inline-block;
+      background: var(--brand-light);
+      color: var(--brand);
+      padding: 0.5rem 1rem;
+      margin: 0.25rem;
+      border-radius: 1rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+    .workout-preview {
+      background: var(--background);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      margin: 0.5rem 0;
+    }
+    .workout-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+    .workout-name {
+      font-weight: 600;
+      color: var(--text);
+    }
+    .workout-author {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+    .copy-workout-btn {
+      background: var(--brand);
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+    .copy-workout-btn:hover {
+      background: var(--brand-dark);
+    }
+  </style>
+</head>
+<body>
+  <header class="header" role="banner">
+    <a href="home.html" class="logo-link">
+      <img src="logo.jpeg" alt="Spartacus" class="logo-img">
+      <span class="logo-text">Spartacus</span>
+    </a>
+    <h1 style="font-size:1.4rem;font-weight:700">Workout Recommendations</h1>
+    <button id="user-btn" class="user-btn" aria-label="Account"></button>
+  </header>
+
+  <main class="layout" role="main">
+    <div id="recommendations-container">
+      <div id="loading" style="text-align: center; padding: 2rem;">
+        <p>Loading recommendations...</p>
+      </div>
+    </div>
+  </main>
+
+  <script defer src="auth.js"></script>
+  <script defer src="recommendations.js"></script>
+</body>
+</html>

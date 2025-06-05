@@ -3,7 +3,7 @@
 const fs      = require('fs').promises;
 const path    = require('path');
 const database = require('../database/database'); // now this resolves correctly
-const raw     = require('./public/exercises.json');
+const raw     = require('./exercises.json');
 
 async function main() {
   try {

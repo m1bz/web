@@ -146,13 +146,12 @@ const server = http.createServer(async (req, res) => {
     });
     return res.end();
   }
-
   const parsed = url.parse(req.url);
   const cookies = parseCookies(req);
   const userId  = cookies.sid;
 
   /* ---------------- API: GET /api/me ------------------ */
- if (req.method === "GET" && parsed.pathname === "/api/me") {
+  if (req.method === "GET" && parsed.pathname === "/api/me") {
     if (!userId) {
       res.writeHead(204);
       return res.end();
@@ -176,6 +175,263 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
+  // Add this to your server.js file in the API section
+
+/* ---------------- API: GET /api/recommendations ---------- */
+if (req.method === "GET" && parsed.pathname === "/api/recommendations") {
+  if (!userId) { 
+    res.writeHead(401); 
+    return res.end(); 
+  }
+  
+  try {
+    // Get current user's profile
+    const { rows: userProfile } = await database.query(
+      `SELECT gender, age FROM profiles WHERE user_id = $1`,
+      [userId]
+    );
+    
+    if (!userProfile.length || !userProfile[0].age || !userProfile[0].gender) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ 
+        message: "Please complete your profile (age and gender) to get recommendations" 
+      }));
+    }
+    
+    const { gender, age } = userProfile[0];
+    const ageRange = 5; // ±5 years
+    
+    // Find similar users (same gender, similar age, excluding current user)
+    const { rows: similarUsers } = await database.query(
+      `SELECT DISTINCT u.id, u.username, p.age, p.gender
+       FROM users u
+       JOIN profiles p ON u.id = p.user_id
+       WHERE p.gender = $1 
+         AND p.age BETWEEN $2 AND $3
+         AND u.id != $4
+         AND u.id IN (
+           SELECT DISTINCT user_id FROM saved_workouts
+         )`,
+      [gender, age - ageRange, age + ageRange, userId]
+    );
+    
+    if (similarUsers.length === 0) {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({
+        message: "No similar users found with workout data",
+        recommendations: []
+      }));
+    }
+    
+    const similarUserIds = similarUsers.map(u => u.id);
+    
+    // Get popular exercises from similar users
+    const { rows: popularExercises } = await database.query(
+      `SELECT 
+         exercise_name,
+         exercise_muscle,
+         exercise_difficulty,
+         exercise_equipment_type,
+         exercise_instructions,
+         COUNT(*) as usage_count,
+         ROUND(AVG(user_age)::numeric, 1) as avg_user_age
+       FROM (
+         SELECT 
+           sw.user_id,
+           p.age as user_age,
+           jsonb_array_elements(sw.workout_data) as exercise_data
+         FROM saved_workouts sw
+         JOIN profiles p ON sw.user_id = p.user_id
+         WHERE sw.user_id = ANY($1)
+       ) workout_exercises
+       CROSS JOIN LATERAL (
+         SELECT 
+           exercise_data->>'name' as exercise_name,
+           exercise_data->>'muscle' as exercise_muscle,
+           exercise_data->>'difficulty' as exercise_difficulty,
+           exercise_data->>'equipmentType' as exercise_equipment_type,
+           exercise_data->>'instructions' as exercise_instructions
+       ) exercise_details
+       WHERE exercise_name IS NOT NULL
+       GROUP BY exercise_name, exercise_muscle, exercise_difficulty, exercise_equipment_type, exercise_instructions
+       ORDER BY usage_count DESC, exercise_name
+       LIMIT 20`,
+      [similarUserIds]
+    );
+    
+    // Get popular workout patterns (muscle group combinations)
+    const { rows: popularMuscleGroups } = await database.query(
+      `SELECT 
+         muscle_groups,
+         COUNT(*) as pattern_count,
+         ROUND(AVG(user_age)::numeric, 1) as avg_user_age
+       FROM (
+         SELECT 
+           sw.user_id,
+           p.age as user_age,
+           array_to_string(array_agg(DISTINCT unnested_muscle ORDER BY unnested_muscle), ', ') as muscle_groups
+         FROM saved_workouts sw
+         JOIN profiles p ON sw.user_id = p.user_id
+         CROSS JOIN unnest(sw.body_parts_worked) as unnested_muscle
+         WHERE sw.user_id = ANY($1)
+         GROUP BY sw.id, sw.user_id, p.age
+       ) muscle_patterns
+       GROUP BY muscle_groups
+       HAVING COUNT(*) >= 2
+       ORDER BY pattern_count DESC
+       LIMIT 10`,
+      [similarUserIds]
+    );
+    
+    // Get recent popular workouts
+    const { rows: recentWorkouts } = await database.query(
+      `SELECT 
+         sw.name,
+         sw.workout_data,
+         sw.body_parts_worked,
+         sw.created_at,
+         u.username,
+         p.age,
+         COUNT(*) OVER (PARTITION BY sw.name) as name_popularity
+       FROM saved_workouts sw
+       JOIN users u ON sw.user_id = u.id
+       JOIN profiles p ON sw.user_id = p.user_id
+       WHERE sw.user_id = ANY($1)
+         AND sw.created_at >= NOW() - INTERVAL '30 days'
+       ORDER BY sw.created_at DESC, name_popularity DESC
+       LIMIT 15`,
+      [similarUserIds]
+    );
+    
+    const recommendations = {
+      userProfile: { gender, age, ageRange },
+      similarUsersCount: similarUsers.length,
+      popularExercises: popularExercises.map(ex => ({
+        name: ex.exercise_name,
+        muscle: ex.exercise_muscle,
+        difficulty: ex.exercise_difficulty,
+        equipmentType: ex.exercise_equipment_type,
+        instructions: ex.exercise_instructions,
+        usageCount: parseInt(ex.usage_count),
+        avgUserAge: parseFloat(ex.avg_user_age)
+      })),
+      popularMuscleGroups: popularMuscleGroups.map(mg => ({
+        muscleGroups: mg.muscle_groups,
+        patternCount: parseInt(mg.pattern_count),
+        avgUserAge: parseFloat(mg.avg_user_age)
+      })),
+      recentWorkouts: recentWorkouts.map(rw => ({
+        name: rw.name,
+        workoutData: rw.workout_data,
+        bodyPartsWorked: rw.body_parts_worked,
+        createdAt: rw.created_at,
+        createdBy: rw.username,
+        userAge: rw.age,
+        namePopularity: parseInt(rw.name_popularity)
+      }))
+    };
+    
+    res.writeHead(200, { "Content-Type": "application/json" });
+    return res.end(JSON.stringify(recommendations));
+    
+  } catch (err) {
+    console.error("Recommendations error:", err);
+    res.writeHead(500); 
+    return res.end();
+  }
+}
+
+  // Add these endpoints to your server.js file
+
+/* ---------------- API: GET /api/profile ---------- */
+if (req.method === "GET" && parsed.pathname === "/api/profile") {
+  if (!userId) { 
+    res.writeHead(401); 
+    return res.end(); 
+  }
+  
+  try {
+    const { rows } = await database.query(
+      `SELECT gender, age, weight, height 
+       FROM profiles 
+       WHERE user_id = $1`,
+      [userId]
+    );
+    
+    const profile = rows[0] || {};
+    res.writeHead(200, { "Content-Type": "application/json" });
+    return res.end(JSON.stringify(profile));
+    
+  } catch (err) {
+    console.error("Profile fetch error:", err);
+    res.writeHead(500); 
+    return res.end();
+  }
+}
+
+/* ---------------- API: PUT /api/profile ---------- */
+if (req.method === "PUT" && parsed.pathname === "/api/profile") {
+  if (!userId) { 
+    res.writeHead(401); 
+    return res.end(); 
+  }
+  
+  try {
+    const body = await readBody(req);
+    const { gender, age, weight, height } = body;
+    
+    // Validate required fields
+    if (!gender || !age) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ 
+        message: "Gender and age are required fields" 
+      }));
+    }
+    
+    // Validate data ranges
+    if (age < 5 || age > 120) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ 
+        message: "Age must be between 5 and 120 years" 
+      }));
+    }
+    
+    if (weight && (weight <= 0 || weight > 300)) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ 
+        message: "Weight must be between 0 and 300 kg" 
+      }));
+    }
+    
+    if (height && (height < 100 || height > 250)) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ 
+        message: "Height must be between 100 and 250 cm" 
+      }));
+    }
+    
+    // Update profile (profile should already exist due to trigger)
+    await database.query(
+      `UPDATE profiles 
+       SET gender = $1, age = $2, weight = $3, height = $4
+       WHERE user_id = $5`,
+      [gender, age, weight || null, height || null, userId]
+    );
+    
+    res.writeHead(200, { "Content-Type": "application/json" });
+    return res.end(JSON.stringify({ 
+      message: "Profile updated successfully" 
+    }));
+    
+  } catch (err) {
+    console.error("Profile update error:", err);
+    res.writeHead(500, { "Content-Type": "application/json" });
+    return res.end(JSON.stringify({ 
+      message: "Internal server error" 
+    }));
+  }
+}
+
   /* ---------------- API: POST /api/register ------------ */
   if (req.method === "POST" && parsed.pathname === "/api/register") {
     try {
@@ -192,11 +448,6 @@ const server = http.createServer(async (req, res) => {
         [username, email, password]
       );
       const user = result.rows[0];
-
-      await database.query(
-        `INSERT INTO profiles (user_id) VALUES ($1)`,
-        [user.id]
-      );
 
       setSessionCookie(res, user.id);
       res.writeHead(201, { "Content-Type": "application/json" });
