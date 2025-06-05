@@ -2,7 +2,7 @@
 
 (async () => {
   const me = await fetch('/api/me', { credentials: 'same-origin' });
-  if (me.status === 200) location.href = 'index.html';
+  if (me.status === 200) location.href = 'home.html';
 })();
 
 document.getElementById('login-form').addEventListener('submit', async e => {
