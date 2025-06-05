@@ -63,7 +63,7 @@ function readBody(req) {
 ----------------------------------------------------------------*/
 async function serveStatic(req, res) {
   const parsed = url.parse(req.url);
-  const filePath = parsed.pathname === "/" ? "index.html" : parsed.pathname.slice(1);
+  const filePath = parsed.pathname === "/" ? "home.html" : parsed.pathname.slice(1);
   const fullPath = path.join(__dirname, "public", filePath);
 
   try {

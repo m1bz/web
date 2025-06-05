@@ -3,7 +3,7 @@
 // Redirect away if already authenticated
 (async () => {
   const me = await fetch('/api/me', { credentials: 'same-origin' });
-  if (me.status === 200) location.href = 'index.html';
+  if (me.status === 200) location.href = 'home.html';
 })();
 
 document.getElementById('register-form').addEventListener('submit', async e => {
@@ -24,7 +24,7 @@ document.getElementById('register-form').addEventListener('submit', async e => {
 
   const errorEl = document.getElementById('register-error');
   if (res.ok) {
-    location.href = 'index.html';
+    location.href = 'home.html';
   } else {
     const data = await res.json().catch(() => ({}));
     errorEl.textContent = data.message || 'Registration failed';

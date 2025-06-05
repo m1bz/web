@@ -3,7 +3,7 @@
   const meRes = await fetch('/api/me', { credentials: 'same-origin' });
   if (meRes.status !== 200) return location.href = 'login.html';
   const user = await meRes.json();
-  if (!user.is_admin) return location.href = 'index.html';
+  if (!user.is_admin) return location.href = 'home.html';
 
   // Fetch muscles for dropdowns
   try {

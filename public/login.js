@@ -22,7 +22,7 @@ document.getElementById('login-form').addEventListener('submit', async e => {
 
   const errorEl = document.getElementById('login-error');
   if (res.ok) {
-    location.href = 'index.html';
+    location.href = 'home.html';
   } else {
     const data = await res.json().catch(() => ({}));
     errorEl.textContent = data.message || 'Login failed';
