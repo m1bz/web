@@ -1,26 +1,26 @@
 // server.js – complete, self‑contained file with auth & static handling
 
-const http       = require("http");
-const fs         = require("fs").promises;
-const path       = require("path");
-const url        = require("url");
-const config     = require("./config/config");
-const database   = require("./database/database");
+const http = require("http");
+const fs = require("fs").promises;
+const path = require("path");
+const url = require("url");
+const config = require("./config/config");
+const database = require("./database/database");
 
 /* -------------------------------------------------------------
    Helper: MIME type lookup
 ----------------------------------------------------------------*/
-function getContentType (ext) {
+function getContentType(ext) {
   const map = {
     ".html": "text/html",
-    ".css" : "text/css",
-    ".js"  : "application/javascript",
+    ".css": "text/css",
+    ".js": "application/javascript",
     ".json": "application/json",
-    ".png" : "image/png",
-    ".jpg" : "image/jpeg",
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
     ".jpeg": "image/jpeg",
-    ".gif" : "image/gif",
-    ".svg" : "image/svgxml",
+    ".gif": "image/gif",
+    ".svg": "image/svgxml",
   };
   return map[ext] || "text/plain";
 }
@@ -28,13 +28,13 @@ function getContentType (ext) {
 /* -------------------------------------------------------------
    Helper: simple cookie parser
 ----------------------------------------------------------------*/
-function parseCookies (req) {
+function parseCookies(req) {
   const raw = req.headers.cookie || "";
   return raw.split("; ").reduce((acc, kv) => {
     const idx = kv.indexOf("=");
     if (idx > -1) {
       const k = kv.slice(0, idx).trim();
-      const v = kv.slice(idx +  1).trim();
+      const v = kv.slice(idx + 1).trim();
       acc[k] = decodeURIComponent(v);
     }
     return acc;
@@ -44,11 +44,11 @@ function parseCookies (req) {
 /* -------------------------------------------------------------
    Helper: read request body (JSON only)
 ----------------------------------------------------------------*/
-function readBody (req) {
+function readBody(req) {
   return new Promise((resolve, reject) => {
     let data = "";
     req.on("data", chunk => (data = chunk));
-    req.on("end",  () => {
+    req.on("end", () => {
       try {
         resolve(data ? JSON.parse(data) : {});
       } catch (err) {
@@ -61,8 +61,8 @@ function readBody (req) {
 /* -------------------------------------------------------------
    Static file server (from /public)
 ----------------------------------------------------------------*/
-async function serveStatic (req, res) {
-  const parsed   = url.parse(req.url);
+async function serveStatic(req, res) {
+  const parsed = url.parse(req.url);
   const filePath = parsed.pathname === "/" ? "index.html" : parsed.pathname.slice(1);
   const fullPath = path.join(__dirname, "public", filePath);
 
@@ -79,7 +79,7 @@ async function serveStatic (req, res) {
 /* -------------------------------------------------------------
    Generate exercises.json directly from DB
 ----------------------------------------------------------------*/
-async function serveExercisesJson (res) {
+async function serveExercisesJson(res) {
   try {
     const { rows } = await database.query(`
       SELECT
@@ -123,13 +123,13 @@ async function serveExercisesJson (res) {
 /* -------------------------------------------------------------
    Auth utilities
 ----------------------------------------------------------------*/
-function setSessionCookie (res, userId) {
+function setSessionCookie(res, userId) {
   // simple unsigned cookie; for prod add HttpOnly/Secure over HTTPS
   const cookie = `sid=${userId}; Path=/; SameSite=Strict; Max-Age=2592000`; // 30 days
   res.setHeader("Set-Cookie", cookie);
 }
 
-function clearSessionCookie (res) {
+function clearSessionCookie(res) {
   res.setHeader("Set-Cookie", "sid=; Path=/; Max-Age=0; SameSite=Strict");
 }
 
@@ -148,7 +148,7 @@ const server = http.createServer(async (req, res) => {
   }
   const parsed = url.parse(req.url);
   const cookies = parseCookies(req);
-  const userId  = cookies.sid;
+  const userId = cookies.sid;
 
   /* ---------------- API: GET /api/me ------------------ */
   if (req.method === "GET" && parsed.pathname === "/api/me") {
@@ -177,33 +177,33 @@ const server = http.createServer(async (req, res) => {
 
   // Add this to your server.js file in the API section
 
-/* ---------------- API: GET /api/recommendations ---------- */
-if (req.method === "GET" && parsed.pathname === "/api/recommendations") {
-  if (!userId) { 
-    res.writeHead(401); 
-    return res.end(); 
-  }
-  
-  try {
-    // Get current user's profile
-    const { rows: userProfile } = await database.query(
-      `SELECT gender, age FROM profiles WHERE user_id = $1`,
-      [userId]
-    );
-    
-    if (!userProfile.length || !userProfile[0].age || !userProfile[0].gender) {
-      res.writeHead(400, { "Content-Type": "application/json" });
-      return res.end(JSON.stringify({ 
-        message: "Please complete your profile (age and gender) to get recommendations" 
-      }));
+  /* ---------------- API: GET /api/recommendations ---------- */
+  if (req.method === "GET" && parsed.pathname === "/api/recommendations") {
+    if (!userId) {
+      res.writeHead(401);
+      return res.end();
     }
-    
-    const { gender, age } = userProfile[0];
-    const ageRange = 5; // ±5 years
-    
-    // Find similar users (same gender, similar age, excluding current user)
-    const { rows: similarUsers } = await database.query(
-      `SELECT DISTINCT u.id, u.username, p.age, p.gender
+
+    try {
+      // Get current user's profile
+      const { rows: userProfile } = await database.query(
+        `SELECT gender, age FROM profiles WHERE user_id = $1`,
+        [userId]
+      );
+
+      if (!userProfile.length || !userProfile[0].age || !userProfile[0].gender) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        return res.end(JSON.stringify({
+          message: "Please complete your profile (age and gender) to get recommendations"
+        }));
+      }
+
+      const { gender, age } = userProfile[0];
+      const ageRange = 5; // ±5 years
+
+      // Find similar users (same gender, similar age, excluding current user)
+      const { rows: similarUsers } = await database.query(
+        `SELECT DISTINCT u.id, u.username, p.age, p.gender
        FROM users u
        JOIN profiles p ON u.id = p.user_id
        WHERE p.gender = $1 
@@ -212,22 +212,22 @@ if (req.method === "GET" && parsed.pathname === "/api/recommendations") {
          AND u.id IN (
            SELECT DISTINCT user_id FROM saved_workouts
          )`,
-      [gender, age - ageRange, age + ageRange, userId]
-    );
-    
-    if (similarUsers.length === 0) {
-      res.writeHead(200, { "Content-Type": "application/json" });
-      return res.end(JSON.stringify({
-        message: "No similar users found with workout data",
-        recommendations: []
-      }));
-    }
-    
-    const similarUserIds = similarUsers.map(u => u.id);
-    
-    // Get popular exercises from similar users
-    const { rows: popularExercises } = await database.query(
-      `SELECT 
+        [gender, age - ageRange, age + ageRange, userId]
+      );
+
+      if (similarUsers.length === 0) {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        return res.end(JSON.stringify({
+          message: "No similar users found with workout data",
+          recommendations: []
+        }));
+      }
+
+      const similarUserIds = similarUsers.map(u => u.id);
+
+      // Get popular exercises from similar users
+      const { rows: popularExercises } = await database.query(
+        `SELECT 
          exercise_name,
          exercise_muscle,
          exercise_difficulty,
@@ -256,12 +256,12 @@ if (req.method === "GET" && parsed.pathname === "/api/recommendations") {
        GROUP BY exercise_name, exercise_muscle, exercise_difficulty, exercise_equipment_type, exercise_instructions
        ORDER BY usage_count DESC, exercise_name
        LIMIT 20`,
-      [similarUserIds]
-    );
-    
-    // Get popular workout patterns (muscle group combinations)
-    const { rows: popularMuscleGroups } = await database.query(
-      `SELECT 
+        [similarUserIds]
+      );
+
+      // Get popular workout patterns (muscle group combinations)
+      const { rows: popularMuscleGroups } = await database.query(
+        `SELECT 
          muscle_groups,
          COUNT(*) as pattern_count,
          ROUND(AVG(user_age)::numeric, 1) as avg_user_age
@@ -280,12 +280,12 @@ if (req.method === "GET" && parsed.pathname === "/api/recommendations") {
        HAVING COUNT(*) >= 2
        ORDER BY pattern_count DESC
        LIMIT 10`,
-      [similarUserIds]
-    );
-    
-    // Get recent popular workouts
-    const { rows: recentWorkouts } = await database.query(
-      `SELECT 
+        [similarUserIds]
+      );
+
+      // Get recent popular workouts
+      const { rows: recentWorkouts } = await database.query(
+        `SELECT 
          sw.name,
          sw.workout_data,
          sw.body_parts_worked,
@@ -300,137 +300,137 @@ if (req.method === "GET" && parsed.pathname === "/api/recommendations") {
          AND sw.created_at >= NOW() - INTERVAL '30 days'
        ORDER BY sw.created_at DESC, name_popularity DESC
        LIMIT 15`,
-      [similarUserIds]
-    );
-    
-    const recommendations = {
-      userProfile: { gender, age, ageRange },
-      similarUsersCount: similarUsers.length,
-      popularExercises: popularExercises.map(ex => ({
-        name: ex.exercise_name,
-        muscle: ex.exercise_muscle,
-        difficulty: ex.exercise_difficulty,
-        equipmentType: ex.exercise_equipment_type,
-        instructions: ex.exercise_instructions,
-        usageCount: parseInt(ex.usage_count),
-        avgUserAge: parseFloat(ex.avg_user_age)
-      })),
-      popularMuscleGroups: popularMuscleGroups.map(mg => ({
-        muscleGroups: mg.muscle_groups,
-        patternCount: parseInt(mg.pattern_count),
-        avgUserAge: parseFloat(mg.avg_user_age)
-      })),
-      recentWorkouts: recentWorkouts.map(rw => ({
-        name: rw.name,
-        workoutData: rw.workout_data,
-        bodyPartsWorked: rw.body_parts_worked,
-        createdAt: rw.created_at,
-        createdBy: rw.username,
-        userAge: rw.age,
-        namePopularity: parseInt(rw.name_popularity)
-      }))
-    };
-    
-    res.writeHead(200, { "Content-Type": "application/json" });
-    return res.end(JSON.stringify(recommendations));
-    
-  } catch (err) {
-    console.error("Recommendations error:", err);
-    res.writeHead(500); 
-    return res.end();
+        [similarUserIds]
+      );
+
+      const recommendations = {
+        userProfile: { gender, age, ageRange },
+        similarUsersCount: similarUsers.length,
+        popularExercises: popularExercises.map(ex => ({
+          name: ex.exercise_name,
+          muscle: ex.exercise_muscle,
+          difficulty: ex.exercise_difficulty,
+          equipmentType: ex.exercise_equipment_type,
+          instructions: ex.exercise_instructions,
+          usageCount: parseInt(ex.usage_count),
+          avgUserAge: parseFloat(ex.avg_user_age)
+        })),
+        popularMuscleGroups: popularMuscleGroups.map(mg => ({
+          muscleGroups: mg.muscle_groups,
+          patternCount: parseInt(mg.pattern_count),
+          avgUserAge: parseFloat(mg.avg_user_age)
+        })),
+        recentWorkouts: recentWorkouts.map(rw => ({
+          name: rw.name,
+          workoutData: rw.workout_data,
+          bodyPartsWorked: rw.body_parts_worked,
+          createdAt: rw.created_at,
+          createdBy: rw.username,
+          userAge: rw.age,
+          namePopularity: parseInt(rw.name_popularity)
+        }))
+      };
+
+      res.writeHead(200, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify(recommendations));
+
+    } catch (err) {
+      console.error("Recommendations error:", err);
+      res.writeHead(500);
+      return res.end();
+    }
   }
-}
 
   // Add these endpoints to your server.js file
 
-/* ---------------- API: GET /api/profile ---------- */
-if (req.method === "GET" && parsed.pathname === "/api/profile") {
-  if (!userId) { 
-    res.writeHead(401); 
-    return res.end(); 
-  }
-  
-  try {
-    const { rows } = await database.query(
-      `SELECT gender, age, weight, height 
+  /* ---------------- API: GET /api/profile ---------- */
+  if (req.method === "GET" && parsed.pathname === "/api/profile") {
+    if (!userId) {
+      res.writeHead(401);
+      return res.end();
+    }
+
+    try {
+      const { rows } = await database.query(
+        `SELECT gender, age, weight, height 
        FROM profiles 
        WHERE user_id = $1`,
-      [userId]
-    );
-    
-    const profile = rows[0] || {};
-    res.writeHead(200, { "Content-Type": "application/json" });
-    return res.end(JSON.stringify(profile));
-    
-  } catch (err) {
-    console.error("Profile fetch error:", err);
-    res.writeHead(500); 
-    return res.end();
-  }
-}
+        [userId]
+      );
 
-/* ---------------- API: PUT /api/profile ---------- */
-if (req.method === "PUT" && parsed.pathname === "/api/profile") {
-  if (!userId) { 
-    res.writeHead(401); 
-    return res.end(); 
+      const profile = rows[0] || {};
+      res.writeHead(200, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify(profile));
+
+    } catch (err) {
+      console.error("Profile fetch error:", err);
+      res.writeHead(500);
+      return res.end();
+    }
   }
-  
-  try {
-    const body = await readBody(req);
-    const { gender, age, weight, height } = body;
-    
-    // Validate required fields
-    if (!gender || !age) {
-      res.writeHead(400, { "Content-Type": "application/json" });
-      return res.end(JSON.stringify({ 
-        message: "Gender and age are required fields" 
-      }));
+
+  /* ---------------- API: PUT /api/profile ---------- */
+  if (req.method === "PUT" && parsed.pathname === "/api/profile") {
+    if (!userId) {
+      res.writeHead(401);
+      return res.end();
     }
-    
-    // Validate data ranges
-    if (age < 5 || age > 120) {
-      res.writeHead(400, { "Content-Type": "application/json" });
-      return res.end(JSON.stringify({ 
-        message: "Age must be between 5 and 120 years" 
-      }));
-    }
-    
-    if (weight && (weight <= 0 || weight > 300)) {
-      res.writeHead(400, { "Content-Type": "application/json" });
-      return res.end(JSON.stringify({ 
-        message: "Weight must be between 0 and 300 kg" 
-      }));
-    }
-    
-    if (height && (height < 100 || height > 250)) {
-      res.writeHead(400, { "Content-Type": "application/json" });
-      return res.end(JSON.stringify({ 
-        message: "Height must be between 100 and 250 cm" 
-      }));
-    }
-    
-    // Update profile (profile should already exist due to trigger)
-    await database.query(
-      `UPDATE profiles 
+
+    try {
+      const body = await readBody(req);
+      const { gender, age, weight, height } = body;
+
+      // Validate required fields
+      if (!gender || !age) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        return res.end(JSON.stringify({
+          message: "Gender and age are required fields"
+        }));
+      }
+
+      // Validate data ranges
+      if (age < 5 || age > 120) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        return res.end(JSON.stringify({
+          message: "Age must be between 5 and 120 years"
+        }));
+      }
+
+      if (weight && (weight <= 0 || weight > 300)) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        return res.end(JSON.stringify({
+          message: "Weight must be between 0 and 300 kg"
+        }));
+      }
+
+      if (height && (height < 100 || height > 250)) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        return res.end(JSON.stringify({
+          message: "Height must be between 100 and 250 cm"
+        }));
+      }
+
+      // Update profile (profile should already exist due to trigger)
+      await database.query(
+        `UPDATE profiles 
        SET gender = $1, age = $2, weight = $3, height = $4
        WHERE user_id = $5`,
-      [gender, age, weight || null, height || null, userId]
-    );
-    
-    res.writeHead(200, { "Content-Type": "application/json" });
-    return res.end(JSON.stringify({ 
-      message: "Profile updated successfully" 
-    }));
-    
-  } catch (err) {
-    console.error("Profile update error:", err);
-    res.writeHead(500, { "Content-Type": "application/json" });
-    return res.end(JSON.stringify({ 
-      message: "Internal server error" 
-    }));
+        [gender, age, weight || null, height || null, userId]
+      );
+
+      res.writeHead(200, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({
+        message: "Profile updated successfully"
+      }));
+
+    } catch (err) {
+      console.error("Profile update error:", err);
+      res.writeHead(500, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({
+        message: "Internal server error"
+      }));
+    }
   }
-}
 
   /* ---------------- API: POST /api/register ------------ */
   if (req.method === "POST" && parsed.pathname === "/api/register") {
@@ -499,7 +499,7 @@ if (req.method === "PUT" && parsed.pathname === "/api/profile") {
     clearSessionCookie(res);
     res.writeHead(204); return res.end();
   }
-    /* ---------------- API: POST /api/save-workout -------- */
+  /* ---------------- API: POST /api/save-workout -------- */
   if (req.method === "POST" && parsed.pathname === "/api/save-workout") {
     if (!userId) { res.writeHead(401); return res.end(); }
     try {
@@ -542,22 +542,19 @@ if (req.method === "PUT" && parsed.pathname === "/api/profile") {
 
 
 
-    /* ---------------- API: GET /api/muscles ---------------- */
- if (req.method === "GET" && parsed.pathname === "/api/muscles") {
-  try {
-    const { rows } = await database.query(
-      `SELECT name FROM muscles ORDER BY name`
-    );
-    res.writeHead(200, { "Content-Type": "application/json" });
-    return res.end(JSON.stringify(rows));
-  } catch (err) {
-    console.error("Error fetching muscles:", err);
-    res.writeHead(500); return res.end();
+  /* ---------------- API: GET /api/muscles ---------------- */
+  if (req.method === "GET" && parsed.pathname === "/api/muscles") {
+    try {
+      const { rows: muscles } = await database.query("SELECT name FROM muscles ORDER BY name");
+      res.writeHead(200, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify(muscles));
+    } catch (err) {
+      console.error('Get muscles error:', err);
+      res.writeHead(500, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ message: 'Internal server error' }));
+    }
   }
-}
-
-
-  /* ---------------- API: POST /api/add-exercise ------------ */
+  /* -------------------- API: GET /api/add-exercise ---------------- */
   if (req.method === "POST" && parsed.pathname === "/api/add-exercise") {
     // only admin
     const cookies = parseCookies(req);
@@ -570,26 +567,70 @@ if (req.method === "PUT" && parsed.pathname === "/api/profile") {
 
     try {
       const body = await readBody(req);
+      console.log('Received exercise data:', body); // Debug log
+
       const { name, primary_muscle, secondary_muscles, difficulty, equipment_type, equipment_subtype, instructions } = body;
+
+      // Validate required fields
+      if (!name || !primary_muscle || !difficulty || !equipment_type || !instructions) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        return res.end(JSON.stringify({ message: 'Missing required fields' }));
+      }
+
+      // Convert secondary_muscles to array if it's a string
+      let secondaryMusclesArray = secondary_muscles || [];
+      if (typeof secondary_muscles === 'string') {
+        // Split by comma and clean up
+        secondaryMusclesArray = secondary_muscles
+          .split(',')
+          .map(muscle => muscle.trim())
+          .filter(muscle => muscle.length > 0);
+      }
+
+      console.log('Processed data:', {
+        name,
+        primary_muscle,
+        secondary_muscles: secondaryMusclesArray,
+        difficulty,
+        equipment_type,
+        equipment_subtype,
+        instructions
+      }); // Debug log
+
       // Insert into exercises table
       await database.query(
         `INSERT INTO exercises (name, primary_muscle, secondary_muscles, difficulty, equipment_type, equipment_subtype, instructions)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-        [name, primary_muscle, secondary_muscles, difficulty, equipment_type, equipment_subtype, instructions]
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [name, primary_muscle, secondaryMusclesArray, difficulty, equipment_type, equipment_subtype || null, instructions]
       );
-      res.writeHead(201); return res.end();
+
+      res.writeHead(201, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ message: 'Exercise added successfully' }));
+
     } catch (err) {
-      console.error(err);
+      console.error('Add exercise error:', err);
+
       if (err.code === '23503') {
         res.writeHead(400, { "Content-Type": "application/json" });
-        return res.end(JSON.stringify({ message: 'Invalid primary muscle selected.' }));
+        return res.end(JSON.stringify({ message: 'Invalid primary muscle selected. Please select a valid muscle from the dropdown.' }));
       }
-      res.writeHead(500); return res.end();
+      if (err.code === '23505') {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        return res.end(JSON.stringify({ message: 'Exercise name already exists. Please choose a different name.' }));
+      }
+      if (err.code === '23514') {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        return res.end(JSON.stringify({ message: 'Invalid difficulty level. Please use: novice, beginner, intermediate, or advanced.' }));
+      }
+
+      res.writeHead(500, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ message: 'Internal server error' }));
     }
   }
 
 
-    /* ---------------- Static files ----------------------- */
+
+  /* ---------------- Static files ----------------------- */
   if (req.method === "GET") {
     return serveStatic(req, res);
   }
@@ -622,12 +663,12 @@ if (req.method === "PUT" && parsed.pathname === "/api/profile") {
 /* -------------------------------------------------------------
    Graceful shutdown
 ----------------------------------------------------------------*/
-async function shutdown () {
+async function shutdown() {
   console.log("Shutting down …");
   server.close(() => console.log("HTTP server stopped"));
-  try { await database.disconnect(); } catch {}
+  try { await database.disconnect(); } catch { }
   process.exit(0);
 }
 
-process.on("SIGINT",  shutdown);
+process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);
