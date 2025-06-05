@@ -1,5 +1,11 @@
 {
+  "scripts": {
+    "setup-db": "node update-database.js",
+    "reset-db": "node reset-database.js",
+    "db:setup": "npm run setup-db",
+    "db:reset": "npm run reset-db"
+  },
   "dependencies": {
-    "pg": "^8.16.0"
+    "pg": "^8.11.0"
   }
 }
