@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Admin · Add Exercise · Spartacus</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="header" role="banner">
+    <a href="home.html" class="logo-link">
+      <img src="logo.jpeg" alt="Spartacus" class="logo-img">
+      <span class="logo-text">Spartacus</span>
+    </a>
+    <h1 style="font-size:1.4rem;font-weight:700">Admin: Add Exercise</h1>
+    <button id="user-btn" class="user-btn" aria-label="Account"></button>
+  </header>
+
+  <main class="layout" role="main" style="grid-template-columns:1fr;">
+    <section style="padding:2rem; max-width:600px; margin:0 auto;">
+      <form id="exercise-form" class="auth-form">
+        <label>Exercise Name
+          <input type="text" name="name" required>
+        </label>
+
+        <label>Primary Muscle
+          <select name="primary_muscle" required id="primary-muscle-select">
+            <option value="" disabled selected>Select primary muscle</option>
+          </select>
+        </label>
+
+        <label>Secondary Muscles (hold Ctrl/Cmd to select multiple)
+          <select name="secondary_muscles" id="secondary-muscles-select" multiple size="5">
+            <!-- options loaded dynamically -->
+          </select>
+        </label>
+
+        <label>Difficulty
+          <select name="difficulty" required>
+            <option value="Beginner">Beginner</option>
+            <option value="Novice">Novice</option>
+            <option value="Intermediate">Intermediate</option>
+            <option value="Advanced">Advanced</option>
+          </select>
+        </label>
+
+        <label>Equipment Type
+          <input type="text" name="equipment_type" required>
+        </label>
+
+        <label>Equipment Subtype
+          <input type="text" name="equipment_subtype">
+        </label>
+
+        <label>Instructions
+          <textarea name="instructions" rows="5" required></textarea>
+        </label>
+
+        <button type="submit" class="btn-primary" style="width:100%;">Add Exercise</button>
+        <p id="submit-message" class="error-msg" hidden></p>
+      </form>
+    </section>
+  </main>
+
+  <script defer src="auth.js"></script>
+  <script defer src="admin.js"></script>
+</body>
+</html>

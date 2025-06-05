@@ -152,15 +152,15 @@ const server = http.createServer(async (req, res) => {
   const userId  = cookies.sid;
 
   /* ---------------- API: GET /api/me ------------------ */
-  if (req.method === "GET" && parsed.pathname === "/api/me") {
+ if (req.method === "GET" && parsed.pathname === "/api/me") {
     if (!userId) {
-      res.writeHead(204); // no content, not logged
+      res.writeHead(204);
       return res.end();
     }
 
     try {
       const { rows } = await database.query(
-        "SELECT id, username FROM users WHERE id=$1 AND is_logged_in=TRUE",
+        "SELECT id, username, is_admin FROM users WHERE id=$1 AND is_logged_in=TRUE",
         [userId]
       );
       if (!rows.length) {
@@ -289,7 +289,56 @@ const server = http.createServer(async (req, res) => {
     return serveExercisesJson(res);
   }
 
-  /* ---------------- Static files ----------------------- */
+
+
+    /* ---------------- API: GET /api/muscles ---------------- */
+ if (req.method === "GET" && parsed.pathname === "/api/muscles") {
+  try {
+    const { rows } = await database.query(
+      `SELECT name FROM muscles ORDER BY name`
+    );
+    res.writeHead(200, { "Content-Type": "application/json" });
+    return res.end(JSON.stringify(rows));
+  } catch (err) {
+    console.error("Error fetching muscles:", err);
+    res.writeHead(500); return res.end();
+  }
+}
+
+
+  /* ---------------- API: POST /api/add-exercise ------------ */
+  if (req.method === "POST" && parsed.pathname === "/api/add-exercise") {
+    // only admin
+    const cookies = parseCookies(req);
+    const uid = cookies.sid;
+    if (!uid) { res.writeHead(401); return res.end(); }
+    try {
+      const { rows: users } = await database.query("SELECT is_admin FROM users WHERE id=$1", [uid]);
+      if (!users.length || !users[0].is_admin) { res.writeHead(403); return res.end(); }
+    } catch (e) { console.error(e); res.writeHead(500); return res.end(); }
+
+    try {
+      const body = await readBody(req);
+      const { name, primary_muscle, secondary_muscles, difficulty, equipment_type, equipment_subtype, instructions } = body;
+      // Insert into exercises table
+      await database.query(
+        `INSERT INTO exercises (name, primary_muscle, secondary_muscles, difficulty, equipment_type, equipment_subtype, instructions)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [name, primary_muscle, secondary_muscles, difficulty, equipment_type, equipment_subtype, instructions]
+      );
+      res.writeHead(201); return res.end();
+    } catch (err) {
+      console.error(err);
+      if (err.code === '23503') {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        return res.end(JSON.stringify({ message: 'Invalid primary muscle selected.' }));
+      }
+      res.writeHead(500); return res.end();
+    }
+  }
+
+
+    /* ---------------- Static files ----------------------- */
   if (req.method === "GET") {
     return serveStatic(req, res);
   }
