@@ -10,11 +10,11 @@ try {
   // Fallback config if file doesn't exist
   config = {
     database: {
-      host: 'localhost',
+      host: 'dpg-d1de88buibrs73flusf0-a',
       port: 5432,
-      database: 'web', // ← Changed from 'web' to 'web1' to match your server
-      user: 'postgres',
-      password: 'admin'
+      database: 'web_r0ow', // ← Changed from 'web' to 'web1' to match your server
+      user: 'web_r0ow_user',
+      password: 'hgzaoOogVOQZdnayxM3nxYEmOpwUYbIs'
     }
   };
 }
@@ -31,11 +31,11 @@ class DatabaseSetup {
     const connectionConfig = config.database.connectionString
       ? { connectionString: config.database.connectionString }
       : {
-          host: config.database.host || 'localhost',
+          host: config.database.host || 'dpg-d1de88buibrs73flusf0-a',
           port: config.database.port || 5432,
-          database: config.database.database || 'web', // ← Fixed default
-          user: config.database.user || 'postgres',
-          password: config.database.password || 'admin'
+          database: config.database.database || 'web_r0ow', // ← Fixed default
+          user: config.database.user || 'web_r0ow_user',
+          password: config.database.password || 'hgzaoOogVOQZdnayxM3nxYEmOpwUYbIs'
         };
 
     try {
