@@ -1,6 +1,6 @@
 // public/main.js
 
-const EXERCISE_URL  = 'exercises.json';
+const EXERCISE_URL  = '/api/exercises';  // ← was 'exercises.json'
 const SVG_SELECTOR  = 'g.clickable';
 
 /* ---------- DOM refs ---------- */
@@ -15,34 +15,32 @@ const filterState  = new Map();         // Map<attr, Set>
 /* ============================================================
    1.  LOAD + FLATTEN DATA
    ============================================================ */
-fetch(EXERCISE_URL)
+fetch(EXERCISE_URL, { credentials: 'same-origin' })
   .then(r => {
     if (!r.ok) throw new Error(`HTTP ${r.status}: ${r.statusText}`);
     return r.json();
   })
   .then(data => {
     /* ---- flatten and normalise ---- */
-    exercises = Object.entries(data).flatMap(([muscle, bucket]) =>
-      (bucket.exercises || []).map(ex => {
-        const type     = ex.equipment?.type?.toLowerCase()     || 'unknown';
-        const subtype  = ex.equipment?.subtype?.toLowerCase()  || null;
-
-        return {
-          ...ex,
-          muscle          : muscle.toLowerCase(),
-          equipmentType   : type,          // parent
-          equipmentSub    : subtype,       // child (may be null)
-          equipmentLabel  : subtype || type
-        };
-      })
-    );
-    console.log(`✅ loaded ${exercises.length} exercises`);
+    exercises = data.map(ex => ({
+      id              : ex.id,
+      name            : ex.name,
+      muscle          : ex.primary_muscle.toLowerCase(),
+      secondary_muscles: ex.secondary_muscles || [],
+      difficulty      : ex.difficulty,
+      equipmentType   : ex.equipment_type.toLowerCase(),
+      equipmentSub    : ex.equipment_subtype ? ex.equipment_subtype.toLowerCase() : null,
+      equipmentLabel  : ex.equipment_subtype || ex.equipment_type,
+      instructions    : ex.instructions,
+      media           : ex.media || []      // ← grab media array
+    }));
     initSvg();
   })
   .catch(err => {
     console.error(err);
     $grid.textContent = 'Could not load exercise data.';
   });
+
 
 /* ============================================================
    2.  SVG INTERACTION
@@ -194,24 +192,21 @@ function onFilter (e) {
 function renderGrid () {
   if (!currentMuscle) { $grid.innerHTML = ''; return; }
 
-  const base = dedupe(
-    exercises.filter(ex => ex.muscle === currentMuscle)
-  );
+  // base set for selected muscle
+  const base = exercises.filter(ex => ex.muscle === currentMuscle);
 
+  // apply filterState…
   const shown = base.filter(ex => {
     for (const [attr, selected] of filterState) {
       if (!selected.size) continue;
-
       let val;
       if (attr === 'equipment') {
-        /* match against BOTH type & subtype */
         val = [ex.equipmentType, ex.equipmentSub].filter(Boolean);
       } else if (attr === 'secondary') {
-        val = ex.secondary_muscles || [];
+        val = ex.secondary_muscles;
       } else {
         val = ex[attr];
       }
-
       if (Array.isArray(val)) {
         if (!val.some(v => selected.has(v))) return false;
       } else {
@@ -226,11 +221,16 @@ function renderGrid () {
     : '<p>No exercises match current filters.</p>';
 }
 
+// ─── card renderer with media ─────────────────────────────────
 const card = ex => `
   <article class="card">
     <h3>${ex.name}</h3>
-    <small>${ex.equipmentLabel} · ${ex.difficulty}</small>
+    <small>${ex.equipmentLabel} • ${ex.difficulty}</small>
     <p>${ex.instructions}</p>
+    ${ex.media.map(m => m.type === 'image'
+      ? `<img src="${m.path}" alt="${ex.name}" class="exercise-media"/>`
+      : `<video src="${m.path}" controls class="exercise-media"></video>`
+    ).join('')}
   </article>`;
 
 /* ============================================================

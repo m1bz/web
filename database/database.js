@@ -151,6 +151,17 @@ async initializeTables() {
         CONSTRAINT exercises_name_unique UNIQUE (name)
       );
 
+
+       /* ---------------- exercise_media ---------------- */
+      CREATE TABLE IF NOT EXISTS exercise_media (
+           id            SERIAL PRIMARY KEY,
+           exercise_id   INT NOT NULL REFERENCES exercises(id) ON DELETE CASCADE,
+           media_type    VARCHAR(10) NOT NULL
+                   CHECK (media_type IN ('image','video')),
+             media_path    TEXT NOT NULL,
+             uploaded_at   TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+      );
+
       /* ---------------- workouts / workout_exercises ---------------- */
       CREATE TABLE IF NOT EXISTS workouts (
         id         SERIAL PRIMARY KEY,
@@ -293,7 +304,7 @@ async initializeTables() {
       } catch (error) {
         console.error('Error during disconnect:', error);
       }
-    }
+    }y
   }
 }
 

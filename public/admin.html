@@ -1,16 +1,16 @@
+<!-- public/admin.html (full file) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Admin · Add Exercise · Spartacus</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+  <title>Admin – Add Exercise – Spartacus</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <header class="header" role="banner">
     <a href="home.html" class="logo-link">
-      <img src="logo.jpeg" alt="Spartacus" class="logo-img">
+      <img src="logo.jpeg" alt="Spartacus" class="logo-img" />
       <span class="logo-text">Spartacus</span>
     </a>
     <h1 style="font-size:1.4rem;font-weight:700">Admin: Add Exercise</h1>
@@ -19,27 +19,31 @@
 
   <main class="layout" role="main" style="grid-template-columns:1fr;">
     <section style="padding:2rem; max-width:600px; margin:0 auto;">
-      <form id="exercise-form" class="auth-form">
+      <form id="exercise-form" class="auth-form" enctype="multipart/form-data">
         <label>Exercise Name
           <input type="text" name="name" required>
         </label>
 
         <label>Primary Muscle
-          <select name="primary_muscle" required id="primary-muscle-select">
+          <select name="primary_muscle" id="primary-muscle-select" required>
             <option value="" disabled selected>Select primary muscle</option>
           </select>
         </label>
 
+        <label>Media (image or video)
+          <input type="file" name="media" accept="image/*,video/*">
+        </label>
+
         <label>Secondary Muscles (hold Ctrl/Cmd to select multiple)
           <select name="secondary_muscles" id="secondary-muscles-select" multiple size="5">
-            <!-- options loaded dynamically -->
+            <!-- populated by admin.js -->
           </select>
         </label>
 
         <label>Difficulty
           <select name="difficulty" required>
-            <option value="beginner">Beginner</option>
             <option value="novice">Novice</option>
+            <option value="beginner">Beginner</option>
             <option value="intermediate">Intermediate</option>
             <option value="advanced">Advanced</option>
           </select>
