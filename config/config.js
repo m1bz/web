@@ -10,10 +10,10 @@ const config = {
         host: process.env.HOST || (isProduction ? '0.0.0.0' : 'localhost'),
         baseUrl: process.env.BASE_URL || (isProduction ? 'https://web-04ha.onrender.com' : 'http://localhost:3000')
     },    database: {        // In production, prefer DATABASE_URL connection string
-        connectionString: process.env.DATABASE_URL || (isProduction ? null : 'postgresql://web_r0ow_user:hgzaoOogVOQZdnayxM3nxYEmOpwUYbIs@dpg-d1de88buibrs73flusf0-a.oregon-postgres.render.com/web_r0ow'),
+        connectionString: process.env.DATABASE_URL || (isProduction ? null : 'postgresql://web_r0ow_user:hgzaoOogVOQZdnayxM3nxYEmOpwUYbIs@dpg-d1de88buibrs73flusf0-a.postgres.render.com/web_r0ow'),
         
         // Fallback individual parameters (only used if connectionString is not available)
-        host: process.env.DB_HOST || 'dpg-d1de88buibrs73flusf0-a.oregon-postgres.render.com',
+        host: process.env.DB_HOST || 'dpg-d1de88buibrs73flusf0-a.postgres.render.com',
         port: process.env.DB_PORT || 5432,
         database: process.env.DB_NAME || 'web_r0ow',
         user: process.env.DB_USER || 'web_r0ow_user',
