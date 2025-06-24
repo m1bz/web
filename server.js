@@ -22,6 +22,7 @@ const DatabaseSetup = require('./scripts/setup-database');
   // ──────────────────────────────────────────────────────────────────────────
   try {
     await database.connect();
+    await ensureDatabaseSetup();
   } catch (dbErr) {
     console.error('Database connection failed (running in limited mode):', dbErr.message);
   }
@@ -30,7 +31,7 @@ const DatabaseSetup = require('./scripts/setup-database');
   async function ensureDatabaseSetup() {
     try {
       // Check if exercises table exists and has data
-      const result = await db.query('SELECT COUNT(*) FROM exercises');
+      const result = await database.query('SELECT COUNT(*) FROM exercises');
       const exerciseCount = parseInt(result.rows[0].count);
 
       if (exerciseCount === 0) {
