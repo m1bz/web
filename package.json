@@ -2,8 +2,9 @@
   "name": "spartacus-fitness",
   "version": "1.0.0",
   "scripts": {
-    "setup-db": "node setup-database.js",
-    "start": "node server.js"
+    "setup-db": "node \"node scripts/setup-database.js\"",
+    "start": "node server.js",
+    "dev": "npm run setup-db && node server.js"
   },
   "dependencies": {
     "cookie-parser": "^1.4.7",
