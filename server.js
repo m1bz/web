@@ -488,8 +488,12 @@ const database   = require('./database/database');
   // Start HTTP server & graceful shutdown
   // ──────────────────────────────────────────────────────────────────────────
   const server = http.createServer(app);
-  server.listen(config.server.port, config.server.host, () => {
-    console.log(`Server running at ${config.server.baseUrl}`);
+  const PORT = process.env.PORT || 3000;
+  const HOST = '0.0.0.0'; // Always bind to all interfaces in production
+
+  server.listen(PORT, HOST, () => {
+    console.log(`Server running at http://${HOST}:${PORT}`);
+    console.log(`Access your app at: https://your-app-name.onrender.com`);
   });
 
   async function shutdown() {
