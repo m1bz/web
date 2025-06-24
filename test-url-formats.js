@@ -7,14 +7,14 @@
 const { Client } = require('pg');
 
 const testUrls = [
-  // Your original URL (missing port)
+  // Your original URL (from Render Internal Database URL)
   'postgresql://web_r0ow_user:hgzaoOogVOQZdnayxM3nxYEmOpwUYbIs@dpg-d1de88buibrs73flusf0-a/web_r0ow',
   
-  // Corrected URL with port
+  // Same URL with explicit port
   'postgresql://web_r0ow_user:hgzaoOogVOQZdnayxM3nxYEmOpwUYbIs@dpg-d1de88buibrs73flusf0-a:5432/web_r0ow',
   
   // Alternative format (postgres vs postgresql)
-  'postgres://web_r0ow_user:hgzaoOogVOQZdnayxM3nxYEmOpwUYbIs@dpg-d1de88buibrs73flusf0-a:5432/web_r0ow'
+  'postgres://web_r0ow_user:hgzaoOogVOQZdnayxM3nxYEmOpwUYbIs@dpg-d1de88buibrs73flusf0-a/web_r0ow'
 ];
 
 async function testUrl(connectionString, index) {

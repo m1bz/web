@@ -19,7 +19,7 @@ async function testConnection() {
   if (!process.env.DATABASE_URL) {
     console.error('❌ DATABASE_URL environment variable is not set!');
     console.log('Make sure to set it in your Render dashboard under Environment Variables.');
-    console.log('Example: postgresql://web_r0ow_user:hgzaoOogVOQZdnayxM3nxYEmOpwUYbIs@dpg-d1de88buibrs73flusf0-a:5432/web_r0ow');
+    console.log('Example: postgresql://web_r0ow_user:hgzaoOogVOQZdnayxM3nxYEmOpwUYbIs@dpg-d1de88buibrs73flusf0-a/web_r0ow');
     process.exit(1);
   }
 
