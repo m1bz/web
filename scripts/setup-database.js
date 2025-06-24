@@ -26,29 +26,29 @@ class DatabaseSetup {
 
   async connect() {
     console.log('🔌 Connecting to PostgreSQL...');
-      const connectionConfig = config.database.connectionString
-      ? { 
-          connectionString: config.database.connectionString,
-          ssl: { rejectUnauthorized: false } // Required for Render
-        }
+    const connectionConfig = config.database.connectionString
+      ? {
+        connectionString: config.database.connectionString,
+        ssl: { rejectUnauthorized: false } // Required for Render
+      }
       : {
-          host: config.database.host || 'dpg-d1de88buibrs73flusf0-a',
-          port: config.database.port || 5432,
-          database: config.database.database || 'web_r0ow', // ← Fixed default
-          user: config.database.user || 'web_r0ow_user',
-          password: config.database.password || 'hgzaoOogVOQZdnayxM3nxYEmOpwUYbIs',
-          ssl: { rejectUnauthorized: false } // Required for Render
-        };
+        host: config.database.host || 'dpg-d1de88buibrs73flusf0-a',
+        port: config.database.port || 5432,
+        database: config.database.database || 'web_r0ow', // ← Fixed default
+        user: config.database.user || 'web_r0ow_user',
+        password: config.database.password || 'hgzaoOogVOQZdnayxM3nxYEmOpwUYbIs',
+        ssl: { rejectUnauthorized: false } // Required for Render
+      };
 
     try {
       this.client = new Client(connectionConfig);
       await this.client.connect();
       console.log(`✅ Connected to PostgreSQL → ${connectionConfig.database}`);
-      
+
       // Test the connection
       await this.client.query('SELECT NOW()');
       console.log('✅ Database connection verified');
-      
+
     } catch (error) {
       console.error('❌ Database connection failed:', error.message);
       throw error;
@@ -57,11 +57,11 @@ class DatabaseSetup {
 
   async loadExercisesData() {
     console.log('📚 Loading exercises from exercises.json...');
-    
+
     try {
       const auxPath = path.join(__dirname, '..', 'aux - not needed in code', 'exercises.json');
       const exercisesContent = await fs.readFile(auxPath, 'utf8');
-      
+
       this.exercisesData = JSON.parse(exercisesContent);
       console.log(`✅ Loaded exercises data with ${Object.keys(this.exercisesData).length} muscle groups`);
     } catch (error) {
@@ -72,7 +72,7 @@ class DatabaseSetup {
 
   async createTables() {
     console.log('\n📦 Creating database tables (matching server expectations)...');
-    
+
     try {
       // Create custom types first
       await this.client.query(`
@@ -134,6 +134,15 @@ class DatabaseSetup {
           CONSTRAINT exercises_instructions_min_length CHECK (char_length(trim(instructions)) >= 10),
           CONSTRAINT exercises_name_unique UNIQUE (name)
         );
+
+         CREATE TABLE IF NOT EXISTS exercise_media (
+           id            SERIAL PRIMARY KEY,
+           exercise_id   INT NOT NULL REFERENCES exercises(id) ON DELETE CASCADE,
+           media_type    VARCHAR(10) NOT NULL
+                   CHECK (media_type IN ('image','video')),
+             media_path    TEXT NOT NULL,
+             uploaded_at   TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+       );
 
         /* ---------------- workouts / workout_exercises ---------------- */
         CREATE TABLE IF NOT EXISTS workouts (
@@ -252,9 +261,9 @@ class DatabaseSetup {
 
   async populateMuscles() {
     console.log('  📝 Adding muscle groups from exercises.json...');
-    
+
     const primaryMuscles = Object.keys(this.exercisesData);
-    
+
     let musclesAdded = 0;
     for (const muscle of primaryMuscles) {
       try {
@@ -269,25 +278,25 @@ class DatabaseSetup {
         console.log(`    ⚠️  Error adding muscle ${muscle}: ${error.message}`);
       }
     }
-    
+
     console.log(`    ✅ Added ${musclesAdded} muscle groups: ${primaryMuscles.join(', ')}`);
   }
 
   async populateExercises() {
     console.log('  💪 Adding exercises from exercises.json...');
-    
+
     let totalExercises = 0;
-    
+
     for (const [muscleGroup, data] of Object.entries(this.exercisesData)) {
       if (!data.exercises || !Array.isArray(data.exercises)) continue;
-      
+
       for (const exercise of data.exercises) {
         try {
           const difficulty = exercise.difficulty === 'novice' ? 'beginner' : exercise.difficulty;
           const equipmentType = exercise.equipment?.type || 'bodyweight';
           const equipmentSubtype = exercise.equipment?.subtype || null;
           const secondaryMuscles = exercise.secondary_muscles || [];
-          
+
           await this.client.query(
             `INSERT INTO exercises (name, primary_muscle, secondary_muscles, difficulty, equipment_type, equipment_subtype, instructions)
              VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -313,7 +322,7 @@ class DatabaseSetup {
 
   async populateUsers() {
     console.log('  👥 Adding 12+ users in age groups...');
-    
+
     // Groups of 3 users with similar ages (±3 years)
     const userGroups = [
       // Group 1: Ages 20-23
@@ -380,7 +389,7 @@ class DatabaseSetup {
 
           if (result.rows.length > 0) {
             const userId = result.rows[0].id;
-            
+
             await this.client.query(
               `UPDATE profiles 
                SET gender = $1, age = $2, weight = $3, height = $4
@@ -399,7 +408,7 @@ class DatabaseSetup {
 
   async populateWorkouts() {
     console.log('  🏋️ Adding mock workouts with server-compatible format...');
-    
+
     try {
       // Get users for workouts (excluding admin)
       const usersResult = await this.client.query(`
@@ -476,7 +485,7 @@ class DatabaseSetup {
       for (let i = 0; i < users.length; i++) {
         const user = users[i];
         const template = workoutTemplates[i % workoutTemplates.length];
-        
+
         const workoutExercises = [];
         const bodyParts = [];
 
@@ -484,10 +493,10 @@ class DatabaseSetup {
         for (const muscle of template.muscles) {
           if (exercisesByMuscle[muscle]) {
             const muscleExercises = exercisesByMuscle[muscle]
-              .filter(ex => ex.difficulty === template.difficulty || 
-                          (template.difficulty === 'intermediate' && ex.difficulty === 'beginner'))
+              .filter(ex => ex.difficulty === template.difficulty ||
+                (template.difficulty === 'intermediate' && ex.difficulty === 'beginner'))
               .slice(0, 2);
-            
+
             // Convert to SERVER FORMAT - this is critical!
             const serverFormatExercises = muscleExercises.map(ex => ({
               name: ex.name,
@@ -496,7 +505,7 @@ class DatabaseSetup {
               equipmentType: ex.equipment_type,   // SERVER EXPECTS "equipmentType"
               instructions: ex.instructions
             }));
-            
+
             workoutExercises.push(...serverFormatExercises);
             if (!bodyParts.includes(muscle)) {
               bodyParts.push(muscle);
@@ -534,10 +543,10 @@ class DatabaseSetup {
 
   async verifySetup() {
     console.log('\n🔍 Verifying database setup...');
-    
+
     try {
       const tables = ['users', 'profiles', 'muscles', 'exercises', 'workouts', 'workout_exercises', 'saved_workouts'];
-      
+
       for (const table of tables) {
         const result = await this.client.query(
           `SELECT COUNT(*) as count FROM ${table}`
@@ -550,7 +559,7 @@ class DatabaseSetup {
       const sampleWorkout = await this.client.query(`
         SELECT workout_data FROM saved_workouts LIMIT 1
       `);
-      
+
       if (sampleWorkout.rows.length > 0) {
         const firstExercise = sampleWorkout.rows[0].workout_data[0];
         console.log(`    ✅ Sample exercise format:`, {
@@ -576,7 +585,7 @@ class DatabaseSetup {
         GROUP BY age_group
         ORDER BY age_group
       `);
-      
+
       console.log('\n    👥 User age distribution:');
       ageGroups.rows.forEach(group => {
         console.log(`      ${group.age_group}: ${group.users_count} users`);
@@ -606,13 +615,13 @@ class DatabaseSetup {
   async run() {
     try {
       console.log('🚀 Starting Complete Database Setup\n');
-      
+
       await this.loadExercisesData();
       await this.connect();
       await this.createTables();
       await this.populateData();
       await this.verifySetup();
-      
+
       console.log('\n🎉 Database setup completed successfully!');
       console.log('\n📋 Summary:');
       console.log('   • All tables created matching server expectations');
@@ -621,7 +630,7 @@ class DatabaseSetup {
       console.log('   • All muscle groups and exercises from exercises.json');
       console.log('   • Sample workouts in server-compatible format');
       console.log('   • Server should work correctly now');
-      
+
     } catch (error) {
       console.error('\n💥 Setup failed:', error.message);
       process.exit(1);
