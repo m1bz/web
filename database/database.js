@@ -46,7 +46,7 @@ class Database {
       
       // Handle specific connection errors
       if (error.code === 'ENOTFOUND') {
-        throw new Error(`Database host not found: ${connectionConfig.host || 'localhost'}`);
+        throw new Error(`Database host not found: ${connectionConfig.host || 'dpg-d1de88buibrs73flusf0-a'}`);
       }
       if (error.code === 'ECONNREFUSED') {
         throw new Error(`Database connection refused. Is PostgreSQL running on port ${connectionConfig.port || 5432}?`);
