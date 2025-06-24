@@ -6,11 +6,10 @@ const path = require('path');
 let config;
 try {
   config = require('../config/config');
-} catch (error) {
-  // Fallback config if file doesn't exist
+} catch (error) {  // Fallback config if file doesn't exist
   config = {
     database: {
-      host: 'dpg-d1de88buibrs73flusf0-a.oregon-postgres.render.com',
+      host: 'dpg-d1de88buibrs73flusf0-a',
       port: 5432,
       database: 'web_r0ow', // ← Changed from 'web' to 'web1' to match your server
       user: 'web_r0ow_user',
@@ -27,15 +26,18 @@ class DatabaseSetup {
 
   async connect() {
     console.log('🔌 Connecting to PostgreSQL...');
-    
-    const connectionConfig = config.database.connectionString
-      ? { connectionString: config.database.connectionString }
+      const connectionConfig = config.database.connectionString
+      ? { 
+          connectionString: config.database.connectionString,
+          ssl: { rejectUnauthorized: false } // Required for Render
+        }
       : {
-          host: config.database.host || 'dpg-d1de88buibrs73flusf0-a.oregon-postgres.render.com',
+          host: config.database.host || 'dpg-d1de88buibrs73flusf0-a',
           port: config.database.port || 5432,
           database: config.database.database || 'web_r0ow', // ← Fixed default
           user: config.database.user || 'web_r0ow_user',
-          password: config.database.password || 'hgzaoOogVOQZdnayxM3nxYEmOpwUYbIs'
+          password: config.database.password || 'hgzaoOogVOQZdnayxM3nxYEmOpwUYbIs',
+          ssl: { rejectUnauthorized: false } // Required for Render
         };
 
     try {

@@ -7,26 +7,39 @@ class Database {
     this.isConnected = false;
     this.connectionRetries = 0;
     this.maxRetries = 3;
-  }
-
-  /* ─────────────────────────────────────────────────────────── */
+  }  /* ─────────────────────────────────────────────────────────── */
   async connect() {
     const connectionConfig = config.database.connectionString
-      ? { connectionString: config.database.connectionString }
+      ? { 
+          connectionString: config.database.connectionString,
+          ssl: config.app.environment === 'production' ? { rejectUnauthorized: false } : false
+        }
       : {
           host    : config.database.host,
           port    : config.database.port,
           database: config.database.database,
           user    : config.database.user,
-          password: config.database.password
+          password: config.database.password,
+          ssl     : config.app.environment === 'production' ? { rejectUnauthorized: false } : false
         };
+
+    // Debug logging (without exposing passwords)
+    console.log('🔌 Attempting database connection...');
+    console.log(`Environment: ${config.app.environment}`);
+    if (connectionConfig.connectionString) {
+      const url = new URL(connectionConfig.connectionString);
+      console.log(`Using connection string to: ${url.hostname}:${url.port}/${url.pathname.substring(1)}`);
+    } else {
+      console.log(`Using individual params to: ${connectionConfig.host}:${connectionConfig.port}/${connectionConfig.database}`);
+    }
+    console.log(`SSL enabled: ${!!connectionConfig.ssl}`);
 
     try {
       this.client = new Client(connectionConfig);
       await this.client.connect();
       this.isConnected = true;
       this.connectionRetries = 0;
-      console.log(`Connected to PostgreSQL → ${config.database.database}`);
+      console.log(`✅ Connected to PostgreSQL → ${config.database.database}`);
       
       // Set up error handling for connection
       this.client.on('error', (err) => {
@@ -41,12 +54,14 @@ class Database {
       
       await this.initializeTables();
     } catch (error) {
-      console.error('Database connection failed:', error);
+      console.error('❌ Database connection failed:', error);
       this.isConnected = false;
-      
-      // Handle specific connection errors
+        // Handle specific connection errors
       if (error.code === 'ENOTFOUND') {
-        throw new Error(`Database host not found: ${connectionConfig.host || 'dpg-d1de88buibrs73flusf0-a.oregon-postgres.render.com'}`);
+        const hostUsed = connectionConfig.connectionString 
+          ? new URL(connectionConfig.connectionString).hostname
+          : connectionConfig.host;
+        throw new Error(`Database host not found: ${hostUsed}. Check your DATABASE_URL environment variable.`);
       }
       if (error.code === 'ECONNREFUSED') {
         throw new Error(`Database connection refused. Is PostgreSQL running on port ${connectionConfig.port || 5432}?`);

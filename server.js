@@ -103,6 +103,42 @@ const database   = require('./database/database');
     } catch (err) {
       console.error(err);
       return res.sendStatus(500);
+    }  });
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // API: GET /api/debug - Debug endpoint for troubleshooting (remove in production)
+  // ──────────────────────────────────────────────────────────────────────────
+  app.get('/api/debug', async (req, res) => {
+    try {
+      const debugInfo = {
+        environment: config.app.environment,
+        nodeEnv: process.env.NODE_ENV,
+        renderEnv: !!process.env.RENDER,
+        databaseConnected: database.isConnected,
+        databaseConfig: {
+          hasConnectionString: !!config.database.connectionString,
+          host: config.database.host,
+          database: config.database.database,
+          user: config.database.user,
+          // Don't expose password
+        },
+        timestamp: new Date().toISOString()
+      };
+
+      // Try a simple database query
+      if (database.isConnected) {
+        try {
+          const result = await database.query('SELECT version();');
+          debugInfo.databaseVersion = result.rows[0].version.substring(0, 50);
+        } catch (dbErr) {
+          debugInfo.databaseError = dbErr.message;
+        }
+      }
+
+      res.json(debugInfo);
+    } catch (err) {
+      console.error('Debug endpoint error:', err);
+      res.status(500).json({ error: err.message });
     }
   });
 
