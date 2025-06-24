@@ -9,7 +9,7 @@ const config = {
     },
     
     database: {
-        host: process.env.DB_HOST || 'localhost',
+        host: process.env.DB_HOST || 'dpg-d1de88buibrs73flusf0-a',
         port: process.env.DB_PORT || 5432,
         database: process.env.DB_NAME || 'web_r0ow',
         user: process.env.DB_USER || 'web_r0ow_user',
