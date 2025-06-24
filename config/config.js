@@ -10,8 +10,7 @@ const config = {
         host: process.env.HOST || (isProduction ? '0.0.0.0' : 'localhost'),
         baseUrl: process.env.BASE_URL || (isProduction ? 'https://web-04ha.onrender.com' : 'http://localhost:3000')
     },
-      database: {
-        // In production, prefer DATABASE_URL connection string
+      database: {        // In production, prefer DATABASE_URL connection string
         connectionString: process.env.DATABASE_URL || (isProduction ? null : 'postgresql://web_r0ow_user:hgzaoOogVOQZdnayxM3nxYEmOpwUYbIs@dpg-d1de88buibrs73flusf0-a:5432/web_r0ow'),
         
         // Fallback individual parameters (only used if connectionString is not available)

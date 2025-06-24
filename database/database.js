@@ -21,14 +21,20 @@ class Database {
           user    : config.database.user,
           password: config.database.password,
           ssl     : config.app.environment === 'production' ? { rejectUnauthorized: false } : false
-        };
-
-    // Debug logging (without exposing passwords)
+        };    // Debug logging (without exposing passwords)
     console.log('🔌 Attempting database connection...');
     console.log(`Environment: ${config.app.environment}`);
     if (connectionConfig.connectionString) {
-      const url = new URL(connectionConfig.connectionString);
-      console.log(`Using connection string to: ${url.hostname}:${url.port}/${url.pathname.substring(1)}`);
+      console.log(`Raw connection string: ${connectionConfig.connectionString.substring(0, 50)}...`);
+      try {
+        const url = new URL(connectionConfig.connectionString);
+        console.log(`Using connection string to: ${url.hostname}:${url.port}/${url.pathname.substring(1)}`);
+        console.log(`Username: ${url.username}`);
+        console.log(`Port: ${url.port || 'default'}`);
+      } catch (urlError) {
+        console.error(`❌ Invalid connection string format: ${urlError.message}`);
+        console.log(`Connection string: ${connectionConfig.connectionString}`);
+      }
     } else {
       console.log(`Using individual params to: ${connectionConfig.host}:${connectionConfig.port}/${connectionConfig.database}`);
     }
