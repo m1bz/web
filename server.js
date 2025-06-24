@@ -1,15 +1,20 @@
 // server.js – complete, self-contained file with auth, static, and media upload handling
 
-const express      = require('express');
-const http         = require('http');
-const fs           = require('fs').promises;
-const path         = require('path');
-const url          = require('url');
+const express = require('express');
+const http = require('http');
+const fs = require('fs').promises;
+const path = require('path');
+const url = require('url');
 const cookieParser = require('cookie-parser');
-const multer       = require('multer');
+const multer = require('multer');
 
-const config     = require('./config/config');
-const database   = require('./database/database');
+const config = require('./config/config');
+const database = require('./database/database');
+
+// Add this near the top after your imports
+const DatabaseSetup = require('./scripts/setup-database');
+
+
 
 (async () => {
   // ──────────────────────────────────────────────────────────────────────────
@@ -19,6 +24,32 @@ const database   = require('./database/database');
     await database.connect();
   } catch (dbErr) {
     console.error('Database connection failed (running in limited mode):', dbErr.message);
+  }
+
+  // Add this function after your database connection
+  async function ensureDatabaseSetup() {
+    try {
+      // Check if exercises table exists and has data
+      const result = await db.query('SELECT COUNT(*) FROM exercises');
+      const exerciseCount = parseInt(result.rows[0].count);
+
+      if (exerciseCount === 0) {
+        console.log('🔄 Database appears empty, running setup...');
+        const setup = new DatabaseSetup();
+        await setup.run();
+        console.log('✅ Database setup completed');
+      } else {
+        console.log(`✅ Database ready with ${exerciseCount} exercises`);
+      }
+    } catch (error) {
+      if (error.code === '42P01') { // Table doesn't exist
+        console.log('🔄 Tables not found, running database setup...');
+        const setup = new DatabaseSetup();
+        await setup.run();
+      } else {
+        console.error('⚠️ Database setup check failed:', error.message);
+      }
+    }
   }
 
   const app = express();
@@ -34,7 +65,7 @@ const database   = require('./database/database');
 
   // CORS & preflight (for fetch in dev)
   app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin',  '*');
+    res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Content-Type');
     if (req.method === 'OPTIONS') {
@@ -103,7 +134,8 @@ const database   = require('./database/database');
     } catch (err) {
       console.error(err);
       return res.sendStatus(500);
-    }  });
+    }
+  });
 
   // ──────────────────────────────────────────────────────────────────────────
   // API: GET /api/debug - Debug endpoint for troubleshooting (remove in production)
@@ -124,6 +156,7 @@ const database   = require('./database/database');
         },
         timestamp: new Date().toISOString()
       };
+      await ensureDatabaseSetup();
 
       // Try a simple database query
       if (database.isConnected) {
@@ -495,15 +528,15 @@ const database   = require('./database/database');
       for (const row of rows) {
         out[row.primary_muscle] ??= { exercises: [] };
         out[row.primary_muscle].exercises.push({
-          name:            row.name,
-          primary_muscle:  row.primary_muscle,
+          name: row.name,
+          primary_muscle: row.primary_muscle,
           secondary_muscles: row.secondary_muscles,
-          difficulty:      row.difficulty,
+          difficulty: row.difficulty,
           equipment: {
-            type:    row.equipment_type,
+            type: row.equipment_type,
             subtype: row.equipment_subtype,
           },
-          instructions:    row.instructions,
+          instructions: row.instructions,
         });
       }
       return res.json(out);
@@ -535,11 +568,11 @@ const database   = require('./database/database');
   async function shutdown() {
     console.log('Shutting down …');
     server.close(() => console.log('HTTP server stopped'));
-    try { await database.disconnect(); } catch {}
+    try { await database.disconnect(); } catch { }
     process.exit(0);
   }
 
-  process.on('SIGINT',  shutdown);
+  process.on('SIGINT', shutdown);
   process.on('SIGTERM', shutdown);
 
 })();
