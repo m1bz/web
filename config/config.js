@@ -11,10 +11,10 @@ const config = {
     database: {
         host: process.env.DB_HOST || 'localhost',
         port: process.env.DB_PORT || 5432,
-        database: process.env.DB_NAME || 'web',
-        user: process.env.DB_USER || 'postgres',
-        password: process.env.DB_PASSWORD || 'admin',
-        connectionString: process.env.DATABASE_URL || null
+        database: process.env.DB_NAME || 'web_r0ow',
+        user: process.env.DB_USER || 'web_r0ow_user',
+        password: process.env.DB_PASSWORD || 'hgzaoOogVOQZdnayxM3nxYEmOpwUYbIs',
+        connectionString: process.env.DATABASE_URL || 'postgresql://web_r0ow_user:hgzaoOogVOQZdnayxM3nxYEmOpwUYbIs@dpg-d1de88buibrs73flusf0-a/web_r0ow'
     },
     
     app: {
