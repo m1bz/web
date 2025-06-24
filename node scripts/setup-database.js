@@ -10,7 +10,7 @@ try {
   // Fallback config if file doesn't exist
   config = {
     database: {
-      host: 'dpg-d1de88buibrs73flusf0-a',
+      host: 'dpg-d1de88buibrs73flusf0-a.oregon-postgres.render.com',
       port: 5432,
       database: 'web_r0ow', // ← Changed from 'web' to 'web1' to match your server
       user: 'web_r0ow_user',
@@ -31,7 +31,7 @@ class DatabaseSetup {
     const connectionConfig = config.database.connectionString
       ? { connectionString: config.database.connectionString }
       : {
-          host: config.database.host || 'dpg-d1de88buibrs73flusf0-a',
+          host: config.database.host || 'dpg-d1de88buibrs73flusf0-a.oregon-postgres.render.com',
           port: config.database.port || 5432,
           database: config.database.database || 'web_r0ow', // ← Fixed default
           user: config.database.user || 'web_r0ow_user',
