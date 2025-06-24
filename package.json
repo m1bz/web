@@ -1,12 +1,9 @@
 {
   "name": "spartacus-fitness",
-  "version": "1.0.0",  "scripts": {
+  "version": "1.0.0",  
+  "scripts": {
     "setup-db": "node scripts/setup-database.js",
-    "build": "npm run setup-db",
-    "test-db": "node test-db-connection.js",
-    "test-urls": "node test-url-formats.js",
-    "quick-test": "node quick-test.js",
-    "start": "node server.js",
+    "start": "npm run setup-db && node server.js",
     "dev": "npm run setup-db && node server.js"
   },
   "dependencies": {
