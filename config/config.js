@@ -3,32 +3,35 @@
 // Detect production environment
 const isProduction = process.env.NODE_ENV === 'production' || process.env.RENDER;
 
+// Load & sanitize the raw DATABASE_URL (in case it accidentally
+// includes the literal "DATABASE_URL=" prefix)
+const rawDatabaseUrl = process.env.DATABASE_URL || '';
+const connectionString = rawDatabaseUrl.replace(/^DATABASE_URL=/i, '');
+
 const config = {
   server: {
     port: process.env.PORT || 3000,
-    host: process.env.HOST || (isProduction ? '0.0.0.0' : 'localhost'),
+    host:
+      process.env.HOST ||
+      (isProduction ? '0.0.0.0' : 'localhost'),
     baseUrl:
       process.env.BASE_URL ||
       (isProduction
-        ? 'https://web-04ha.onrender.com'
+        ? 'https://your-app-name.onrender.com'
         : 'http://localhost:3000'),
   },
 
   database: {
-    // Hard-coded connection string from your screenshot
-    connectionString:
-      process.env.DATABASE_URL ||
-      'postgresql://web_r0ow_user:'
-      + 'hgzaoOogVOQZdnayxM3nxYEmOpwUYbIs'
-      + '@dpg-d1de88buibrs73flusf0-a/web_r0ow',
+    // In production Render will inject DATABASE_URL;
+    // we’ve stripped any "DATABASE_URL=" prefix above.
+    connectionString: connectionString || undefined,
 
-    // (These will never be used, since connectionString is set;
-    // you can remove them entirely if you like)
-    host:     'dpg-d1de88buibrs73flusf0-a',
-    port:     5432,
-    database: 'web_r0ow',
-    user:     'web_r0ow_user',
-    password: 'hgzaoOogVOQZdnayxM3nxYEmOpwUYbIs',
+    // Local/dev overrides (only used if connectionString is empty)
+    host:     process.env.DB_HOST,
+    port:     process.env.DB_PORT,
+    database: process.env.DB_NAME,
+    user:     process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
   },
 
   app: {
