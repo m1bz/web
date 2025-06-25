@@ -8,14 +8,7 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header class="header" role="banner">
-    <a href="home.html" class="logo-link">
-      <img src="logo.jpeg" alt="Spartacus" class="logo-img">
-      <span class="logo-text">Spartacus</span>
-    </a>
-    <h1 style="font-size:1.4rem;font-weight:700">My Saved Workouts</h1>
-    <button id="user-btn" class="user-btn" aria-label="Account"></button>
-  </header>
+<div id="site-header"></div>
 
   <main class="layout" role="main">
     <section class="exercise-grid" id="saved-grid" aria-live="polite"></section>
@@ -23,5 +16,6 @@
 
   <script defer src="auth.js"></script>
   <script defer src="saved-workouts.js" type="module"></script>
+  <script defer src="include-header.js"></script>
 </body>
 </html>

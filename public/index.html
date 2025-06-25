@@ -14,17 +14,7 @@
 </head>
 
 <body>
-<header class="header" role="banner">
-  <a href="index.html" class="logo-link">
-    <img src="logo.jpeg" alt="Spartacus" class="logo-img">
-    <span class="logo-text">Spartacus</span>
-  </a>
-
-  <input id="global-search" class="search-input" type="search"
-placeholder="Search anything…" aria-label="Global search">
-  <ul id="global-search-results" class="search-results" hidden></ul>
-    <button id="user-btn" class="user-btn" aria-label="Account"></button>
-</header>
+<div id="site-header"></div>
 
 <script defer src="auth.js"></script>
 
@@ -397,5 +387,6 @@ placeholder="Search anything…" aria-label="Global search">
 
 
 <script src="main.js" type="module"></script>
+<script defer src="include-header.js"></script>
 </body>
 </html>
