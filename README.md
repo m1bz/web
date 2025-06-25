@@ -20,7 +20,7 @@
 
 Spartacus Fitness is a comprehensive workout management platform that combines personalized exercise recommendations with advanced analytics and social features. Built with modern web technologies, it offers everything from interactive muscle mapping to competitive leaderboards.
 
-![Dashboard Overview](docs/images/Screenshot 2025-06-25 185125.png)
+![Dashboard Overview](docs/images/1.png)
 *Main dashboard showing personalized recommendations and user progress*
 
 ---
@@ -33,7 +33,7 @@ Spartacus Fitness is a comprehensive workout management platform that combines p
 - **Comprehensive Exercise Database**: 500+ exercises with detailed instructions
 - **Media Support**: Exercise videos and images for proper form
 
-![Exercise Explorer](docs\images\Screenshot 2025-06-25 185213.png)
+![Exercise Explorer](docs\images\2.png)
 *Interactive muscle map with exercise filtering*
 
 ### 💪 **Intelligent Workout Generation**
@@ -42,7 +42,7 @@ Spartacus Fitness is a comprehensive workout management platform that combines p
 - **Balanced Programming**: Ensures proper muscle group distribution
 - **Progressive Overload**: Automatic difficulty adjustments over time
 
-![Workout Generator](docs\images\Screenshot 2025-06-25 185314.png)
+![Workout Generator](docs\images\3.png)
 *Smart workout generation process*
 
 ### 📊 **Advanced Analytics & Tracking**
@@ -51,7 +51,7 @@ Spartacus Fitness is a comprehensive workout management platform that combines p
 - **Body Composition Tracking**: Weight, measurements, and photos
 - **Workout History**: Detailed logs with searchable exercise database
 
-![Leaderboard](docs\images\Screenshot 2025-06-25 185348.png)
+![Leaderboard](docs\images\4.png)
 *Competitive leaderboards with ranking system*
 
 ### 📱 **Mobile-First Design**
@@ -60,7 +60,7 @@ Spartacus Fitness is a comprehensive workout management platform that combines p
 - **Offline Capability**: Core features work without internet
 - **Progressive Web App**: Install on mobile devices
 
-![Mobile Interface](docs\images\Screenshot 2025-06-25 185623.png)
+![Mobile Interface](docs\images\5.png)
 *Mobile-optimized interface design*
 
 ---
@@ -97,8 +97,6 @@ graph TD
     style D fill:#fff3e0
 ```
 
-![System Architecture](docs/images/system-architecture.png)
-*Detailed system architecture and data flow*
 
 ---
 
@@ -145,8 +143,6 @@ graph TD
    - Frontend: `http://localhost:3000`
    - Admin Panel: `http://localhost:3000/admin.html`
 
-![Installation Process](docs/images/installation-demo.gif)
-*Step-by-step installation demonstration*
 
 ---
 
@@ -158,9 +154,6 @@ graph TD
 3. **Equipment Selection**: Choose available equipment
 4. **First Workout**: Generate your personalized routine
 
-![Getting Started](docs/images/getting-started.png)
-*User onboarding flow*
-
 ### 💪 **Core Workflows**
 
 #### **Exercise Discovery**
@@ -169,8 +162,6 @@ graph TD
 - Filter by difficulty level
 - View detailed instructions and media
 
-![Exercise Discovery](docs/images/exercise-discovery.gif)
-*Exercise search and filtering demonstration*
 
 #### **Workout Generation**
 - Select target muscle groups
@@ -179,8 +170,6 @@ graph TD
 - Generate balanced routine
 - Save to personal library
 
-![Workout Creation](docs/images/workout-creation.png)
-*Intelligent workout generation interface*
 
 #### **Progress Tracking**
 - Log completed workouts
@@ -188,8 +177,6 @@ graph TD
 - Monitor weekly/monthly progress
 - View performance analytics
 
-![Progress Tracking](docs/images/progress-tracking.png)
-*Workout logging and progress visualization*
 
 ---
 
@@ -201,8 +188,6 @@ graph TD
 - **Content Moderation**: Review user-generated content
 - **System Analytics**: Platform usage statistics
 
-![Admin Dashboard](docs/images/admin-dashboard.png)
-*Comprehensive admin control panel*
 
 ### 📊 **Analytics & Reporting**
 - **User Engagement Metrics**: Active users, session duration
@@ -210,8 +195,7 @@ graph TD
 - **Performance Reports**: System performance monitoring
 - **Export Tools**: Data export for analysis
 
-![Admin Analytics](docs/images/admin-analytics.png)
-*Detailed admin analytics and reporting*
+
 
 ---
 
@@ -223,8 +207,6 @@ graph TD
 - **Data Backup**: Personal data export
 - **Integration APIs**: Connect with other fitness apps
 
-![Data Export](docs/images/data-export.png)
-*Multiple export formats and integration options*
 
 ### 🔒 **Privacy & Security**
 - **Data Encryption**: All sensitive data encrypted
@@ -242,8 +224,6 @@ graph TD
 - **Gesture Support**: Swipe navigation
 - **Offline Mode**: Core features work offline
 
-![Mobile Features](docs/images/mobile-features.png)
-*Mobile-optimized interface showcase*
 
 ### 🔔 **Notifications**
 - **Workout Reminders**: Customizable reminder schedule
@@ -261,8 +241,6 @@ graph TD
 - **Weekly Challenges**: Rotating fitness challenges
 - **Achievement Badges**: Unlock special rewards
 
-![Competitive Features](docs/images/competitive-features.png)
-*Social competition and achievement system*
 
 ### 🤝 **Social Integration**
 - **Friend System**: Connect with workout partners
@@ -286,8 +264,6 @@ graph TD
 - **Workouts & Logs**: Workout tracking
 - **Media & Files**: File storage system
 
-![Database Schema](docs/images/database-schema.png)
-*Complete database relationship diagram*
 
 ---
 
@@ -373,7 +349,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Made with ❤️ by the Spartacus Fitness Team**
 
-![Team Photo](docs/images/team-photo.png)
 
 [⬆ Back to Top](#-spartacus-fitness)
 
