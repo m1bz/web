@@ -9,9 +9,9 @@ const cookieParser = require('cookie-parser');
 const multer = require('multer');
 
 const config = require('./config/config');
-const database = require('./database/database');
+const loggingRoutes = require('./public/logging');
 
-// Add this near the top after your imports
+const database = require('./database/database');
 const DatabaseSetup = require('./scripts/setup-database');
 
 
@@ -58,12 +58,10 @@ const DatabaseSetup = require('./scripts/setup-database');
   // ──────────────────────────────────────────────────────────────────────────
   // Middlewares
   // ──────────────────────────────────────────────────────────────────────────
-  // JSON body parsing
+
   app.use(express.json());
-
-  // Cookie parsing
   app.use(cookieParser());
-
+  app.use('/api', loggingRoutes);
   // CORS & preflight (for fetch in dev)
   app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
@@ -176,23 +174,189 @@ const DatabaseSetup = require('./scripts/setup-database');
     }
   });
 
+
   // ──────────────────────────────────────────────────────────────────────────
   // API: GET /api/recommendations
   // ──────────────────────────────────────────────────────────────────────────
   app.get('/api/recommendations', async (req, res) => {
     const userId = req.cookies.sid;
-    if (!userId) return res.sendStatus(401);
+    if (!userId) {
+      return res.sendStatus(401);
+    }
 
     try {
-      // ... existing recommendation logic unchanged ...
-      // (omitted here for brevity—copy your existing block)
-      // At the end:
-      // res.json(recommendations);
+      // 1. Get current user's profile
+      const { rows: userProfile } = await database.query(
+        `SELECT gender, age FROM profiles WHERE user_id = $1`,
+        [userId]
+      );
+      if (
+        !userProfile.length ||
+        userProfile[0].age == null ||
+        !userProfile[0].gender
+      ) {
+        return res
+          .status(400)
+          .json({
+            message:
+              'Please complete your profile (age and gender) to get recommendations'
+          });
+      }
+      const { gender, age } = userProfile[0];
+      const ageRange = 5; // ±5 years
+
+      // 2. Find similar users (same gender, similar age, excluding current user, with saved workouts)
+      const { rows: similarUsers } = await database.query(
+        `
+      SELECT DISTINCT u.id
+      FROM users u
+      JOIN profiles p ON u.id = p.user_id
+      WHERE p.gender = $1
+        AND p.age BETWEEN $2 AND $3
+        AND u.id != $4
+        AND u.id IN (SELECT DISTINCT user_id FROM saved_workouts)
+      `,
+        [gender, age - ageRange, age + ageRange, userId]
+      );
+
+      if (similarUsers.length === 0) {
+        return res.json({
+          message: 'No similar users found with workout data',
+          recommendations: []
+        });
+      }
+      const similarUserIds = similarUsers.map((u) => u.id);
+
+      // 3. Get popular exercises among those users
+      const { rows: popularExercises } = await database.query(
+        `
+      SELECT
+        ex.exercise_name,
+        ex.exercise_muscle,
+        ex.exercise_difficulty,
+        ex.exercise_equipment_type,
+        ex.exercise_instructions,
+        COUNT(*)        AS usage_count,
+        ROUND(AVG(ex.user_age)::numeric, 1) AS avg_user_age
+      FROM (
+        SELECT
+          sw.user_id,
+          p.age AS user_age,
+          jsonb_array_elements(sw.workout_data) AS exercise_data
+        FROM saved_workouts sw
+        JOIN profiles p ON sw.user_id = p.user_id
+        WHERE sw.user_id = ANY($1)
+      ) AS ex_raw
+      CROSS JOIN LATERAL (
+        SELECT
+          exercise_data->>'name'           AS exercise_name,
+          exercise_data->>'muscle'         AS exercise_muscle,
+          exercise_data->>'difficulty'     AS exercise_difficulty,
+          exercise_data->>'equipmentType'  AS exercise_equipment_type,
+          exercise_data->>'instructions'   AS exercise_instructions,
+          ex_raw.user_age                  AS user_age
+      ) AS ex(exercise_name,exercise_muscle,exercise_difficulty,exercise_equipment_type,exercise_instructions,user_age)
+      WHERE ex.exercise_name IS NOT NULL
+      GROUP BY
+        ex.exercise_name,
+        ex.exercise_muscle,
+        ex.exercise_difficulty,
+        ex.exercise_equipment_type,
+        ex.exercise_instructions
+      ORDER BY usage_count DESC, ex.exercise_name
+      LIMIT 20
+      `,
+        [similarUserIds]
+      );
+
+      // 4. Get popular muscle‐group patterns
+      const { rows: popularMuscleGroups } = await database.query(
+        `
+      SELECT
+        muscle_groups,
+        COUNT(*)    AS pattern_count,
+        ROUND(AVG(user_age)::numeric,1) AS avg_user_age
+      FROM (
+        SELECT
+          sw.id,
+          sw.user_id,
+          p.age AS user_age,
+          array_to_string(
+            array_agg(DISTINCT m ORDER BY m),
+            ', '
+          ) AS muscle_groups
+        FROM saved_workouts sw
+        JOIN profiles p            ON sw.user_id = p.user_id
+        CROSS JOIN unnest(sw.body_parts_worked) AS m
+        WHERE sw.user_id = ANY($1)
+        GROUP BY sw.id, sw.user_id, p.age
+      ) AS patterns
+      GROUP BY muscle_groups
+      HAVING COUNT(*) >= 2
+      ORDER BY pattern_count DESC
+      LIMIT 10
+      `,
+        [similarUserIds]
+      );
+
+      // 5. Get recent popular workouts (last 30 days)
+      const { rows: recentWorkouts } = await database.query(
+        `
+      SELECT
+        sw.name,
+        sw.workout_data,
+        sw.body_parts_worked,
+        sw.created_at,
+        u.username,
+        p.age,
+        COUNT(*) OVER (PARTITION BY sw.name) AS name_popularity
+      FROM saved_workouts sw
+      JOIN users    u ON sw.user_id = u.id
+      JOIN profiles p ON sw.user_id = p.user_id
+      WHERE sw.user_id = ANY($1)
+        AND sw.created_at >= NOW() - INTERVAL '30 days'
+      ORDER BY sw.created_at DESC, name_popularity DESC
+      LIMIT 15
+      `,
+        [similarUserIds]
+      );
+
+      // 6. Assemble final payload
+      const recommendations = {
+        userProfile: { gender, age, ageRange },
+        similarUsersCount: similarUsers.length,
+        popularExercises: popularExercises.map((ex) => ({
+          name: ex.exercise_name,
+          muscle: ex.exercise_muscle,
+          difficulty: ex.exercise_difficulty,
+          equipmentType: ex.exercise_equipment_type,
+          instructions: ex.exercise_instructions,
+          usageCount: parseInt(ex.usage_count, 10),
+          avgUserAge: parseFloat(ex.avg_user_age)
+        })),
+        popularMuscleGroups: popularMuscleGroups.map((mg) => ({
+          muscleGroups: mg.muscle_groups,
+          patternCount: parseInt(mg.pattern_count, 10),
+          avgUserAge: parseFloat(mg.avg_user_age)
+        })),
+        recentWorkouts: recentWorkouts.map((rw) => ({
+          name: rw.name,
+          workoutData: rw.workout_data,
+          bodyPartsWorked: rw.body_parts_worked,
+          createdAt: rw.created_at,
+          createdBy: rw.username,
+          userAge: rw.age,
+          namePopularity: parseInt(rw.name_popularity, 10)
+        }))
+      };
+
+      return res.json(recommendations);
     } catch (err) {
       console.error('Recommendations error:', err);
       return res.sendStatus(500);
     }
   });
+
 
   // ──────────────────────────────────────────────────────────────────────────
   // API: GET /api/profile
@@ -374,7 +538,7 @@ const DatabaseSetup = require('./scripts/setup-database');
   });
 
   // ──────────────────────────────────────────────────────────────────────────
-  // API: POST /api/add-exercise (admin + media upload!)
+  // API: POST /api/add-exercise (admin  media upload!)
   // ──────────────────────────────────────────────────────────────────────────
   app.post(
     '/api/add-exercise',
@@ -419,7 +583,7 @@ const DatabaseSetup = require('./scripts/setup-database');
         return res.status(400).json({ message: 'Missing required fields' });
       }
 
-      // Transaction: insert exercise + optional media
+      // Transaction: insert exercise  optional media
       const client = database.client;
       try {
         await client.query('BEGIN');
@@ -473,62 +637,81 @@ const DatabaseSetup = require('./scripts/setup-database');
   );
 
   // ──────────────────────────────────────────────────────────────────────────
-  // API: GET /api/exercises (with media array)
+  // GET ALL EXERCISES (no filtering)
   // ──────────────────────────────────────────────────────────────────────────
   app.get('/api/exercises', async (req, res) => {
-  const { search } = req.query;
-  let sql = `
-    SELECT
-      e.id,
-      e.name,
-      e.primary_muscle,
-      e.secondary_muscles,
-      e.difficulty,
-      e.equipment_type,
-      e.equipment_subtype,
-      e.instructions,
-      COALESCE(
-        json_agg(
-          json_build_object('type', m.media_type, 'path', m.media_path)
-        ) FILTER (WHERE m.id IS NOT NULL),
-        '[]'
-      ) AS media
-    FROM exercises e
-    LEFT JOIN exercise_media m
-      ON m.exercise_id = e.id
-  `;
-  const params = [];
+    try {
+      const { rows } = await database.query(`
+        SELECT
+          e.id, e.name, e.primary_muscle, e.secondary_muscles,
+          e.difficulty, e.equipment_type, e.equipment_subtype,
+          e.instructions,
+          COALESCE(
+            json_agg(json_build_object('type', m.media_type,'path', m.media_path))
+            FILTER (WHERE m.id IS NOT NULL),
+            '[]'
+          ) AS media
+        FROM exercises e
+        LEFT JOIN exercise_media m ON m.exercise_id = e.id
+        GROUP BY e.id
+        ORDER BY e.name
+      `);
+      return res.json(rows);
+    } catch (err) {
+      console.error('Fetch all exercises error:', err);
+      return res.sendStatus(500);
+    }
+  });
 
-  if (search) {
-    sql += `
-      WHERE
-        e.name ILIKE $1
-        OR e.equipment_type ILIKE $1
-        OR e.equipment_subtype ILIKE $1
-        OR e.primary_muscle ILIKE $1
-        OR EXISTS (
-          SELECT 1
-          FROM unnest(e.secondary_muscles) AS sm
-          WHERE sm ILIKE $1
-        )
+  // ──────────────────────────────────────────────────────────────────────────
+  // SEARCH EXERCISES by name, muscle or equipment
+  // ──────────────────────────────────────────────────────────────────────────
+  app.get('/api/exercises/search', async (req, res) => {
+    const { search } = req.query;
+    const params = [];
+    let where = '';
+
+    if (search) {
+      where = `
+        WHERE
+          e.name             ILIKE $1 OR
+          e.equipment_type   ILIKE $1 OR
+          e.equipment_subtype ILIKE $1 OR
+          e.primary_muscle   ILIKE $1 OR
+          EXISTS (
+            SELECT 1 FROM unnest(e.secondary_muscles) AS sm
+            WHERE sm ILIKE $1
+          )
+      `;
+      params.push(`%${search}%`);
+    }
+
+    const sql = `
+      SELECT
+        e.id, e.name, e.primary_muscle, e.secondary_muscles,
+        e.difficulty, e.equipment_type, e.equipment_subtype,
+        e.instructions,
+        COALESCE(
+          json_agg(json_build_object('type', m.media_type,'path', m.media_path))
+          FILTER (WHERE m.id IS NOT NULL),
+          '[]'
+        ) AS media
+      FROM exercises e
+      LEFT JOIN exercise_media m ON m.exercise_id = e.id
+      ${where}
+      GROUP BY e.id
+      ORDER BY e.name
+      LIMIT 30
     `;
-    params.push(`%${search}%`);
-  }
 
-  sql += `
-    GROUP BY e.id
-    ORDER BY e.name
-    LIMIT 30
-  `;
-
-  try {
-    const { rows } = await database.query(sql, params);
-    return res.json(rows);
-  } catch (err) {
-    console.error('Fetch exercises error:', err);
-    return res.sendStatus(500);
-  }
-});
+    try {
+      const { rows } = await database.query(sql, params);
+      return res.json(rows);
+    } catch (err) {
+      console.error('Search exercises error:', err);
+      return res.sendStatus(500);
+    }
+  });
 
 
   // ──────────────────────────────────────────────────────────────────────────

@@ -23,7 +23,7 @@
 
       try {
         const res = await fetch(
-          `/api/exercises?search=${encodeURIComponent(q)}`,
+          `/api/exercises/search?search=${encodeURIComponent(q)}`,
           { signal: controller.signal }
         );
         if (!res.ok) throw new Error('Server error');
