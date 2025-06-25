@@ -51,15 +51,6 @@ Spartacus Fitness is a comprehensive workout management platform that combines p
 - **Body Composition Tracking**: Weight, measurements, and photos
 - **Workout History**: Detailed logs with searchable exercise database
 
-![Analytics Dashboard](docs/images/analytics-dashboard.png)
-*Comprehensive analytics with interactive charts*
-
-### 🏆 **Social Competition**
-- **Global Leaderboards**: Compete with users worldwide
-- **Age Group Rankings**: Fair competition within age categories
-- **Achievement System**: Unlock badges and milestones
-- **Progress Sharing**: Share workouts and achievements
-
 ![Leaderboard](docs/images/leaderboard.png)
 *Competitive leaderboards with ranking system*
 
