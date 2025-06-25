@@ -14,6 +14,11 @@ const loggingRoutes = require('./public/logging');
 const database = require('./database/database');
 const DatabaseSetup = require('./scripts/setup-database');
 
+const rssExportRouter   = require('./routes/rss_exports');  // workouts feed/exports (public)
+const statsExportRouter = require('./routes/user-stats');   // per-user stats export (auth)
+const leaderboardExportRouter = require('./routes/leaderboard_export'); // NEW
+
+
 
 
 (async () => {
@@ -62,6 +67,9 @@ const DatabaseSetup = require('./scripts/setup-database');
   app.use(express.json());
   app.use(cookieParser());
   app.use('/api', loggingRoutes);
+  app.use('/export',       rssExportRouter);      
+  app.use('/export/stats', statsExportRouter);    
+  app.use('/export/leaderboard', leaderboardExportRouter);
   // CORS & preflight (for fetch in dev)
   app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
@@ -635,11 +643,6 @@ const DatabaseSetup = require('./scripts/setup-database');
       }
     }
   );
-    // ──────────────────────────────────────────────────────────────────────────
-  // GET /api/user-stats
-  // ──────────────────────────────────────────────────────────────────────────
-
-  app.use('/api', require('./routes/user-stats'));
 
 
 
@@ -755,6 +758,26 @@ const DatabaseSetup = require('./scripts/setup-database');
       return res.json(out);
     } catch (err) {
       console.error('Error querying exercises.json:', err);
+      return res.sendStatus(500);
+    }
+  });
+
+
+
+
+  // ──────────────────────────────────────────────────────────
+  // API: GET /api/user-stats   ←  JSON used by front-end page
+  // ──────────────────────────────────────────────────────────
+  app.get('/api/user-stats', async (req, res) => {
+    const uid = req.cookies.sid;
+    if (!uid) return res.sendStatus(401);
+
+    try {
+      // routes/user-stats.js attached buildStats onto the router object
+      const data = await statsExportRouter.buildStats(uid);
+      return res.json(data);
+    } catch (err) {
+      console.error('user-stats API error:', err);
       return res.sendStatus(500);
     }
   });

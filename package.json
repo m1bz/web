@@ -1,6 +1,6 @@
 {
   "name": "spartacus-fitness",
-  "version": "1.0.0",  
+  "version": "1.0.0",
   "scripts": {
     "setup-db": "node scripts/setup-database.js",
     "start": "npm run setup-db && node server.js",
@@ -9,7 +9,10 @@
   "dependencies": {
     "cookie-parser": "^1.4.7",
     "express": "^5.1.0",
+    "feed": "^5.1.0",
+    "json2csv": "^6.0.0-alpha.2",
     "multer": "^2.0.1",
+    "pdfkit": "^0.17.1",
     "pg": "^8.16.0"
   }
 }

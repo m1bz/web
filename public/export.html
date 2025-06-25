@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Data Exports</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div id="site-header"></div>
+
+  <main style="padding:2rem;max-width:600px;margin:auto;">
+    <h1>Data Exports</h1>
+
+    <!-- ─────────────────────────────────────── -->
+    <h2>Public Workout Feed</h2>
+    <ul>
+      <li><a href="/export/rss"  download>View RSS Feed</a></li>
+      <li><a href="/export/csv"  download>Download All Workouts (CSV)</a></li>
+      <li><a href="/export/pdf"  download>Download All Workouts (PDF)</a></li>
+    </ul>
+
+    <!-- ─────────────────────────────────────── -->
+    <h2>Leaderboard</h2>
+    <ul>
+      <li><a href="/export/leaderboard/rss"  download>Leaderboard RSS</a></li>
+      <li><a href="/export/leaderboard/csv"  download>Leaderboard CSV</a></li>
+      <li><a href="/export/leaderboard/pdf"  download>Leaderboard PDF</a></li>
+    </ul>
+
+    <!-- ─────────────────────────────────────── -->
+    <h2>My Personal Stats <small>(requires login)</small></h2>
+    <ul>
+      <li><a href="/export/stats/rss"  download>My Stats RSS</a></li>
+      <li><a href="/export/stats/csv"  download>My Stats CSV</a></li>
+      <li><a href="/export/stats/pdf"  download>My Stats PDF</a></li>
+    </ul>
+  </main>
+    <script defer src="include-header.js"></script>
+</body>
+</html>
