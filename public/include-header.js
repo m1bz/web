@@ -30,6 +30,11 @@
     script.defer = true;
     document.head.appendChild(script);
 
+    const searchScript = document.createElement('script');
+    searchScript.src   = 'search.js';
+    searchScript.defer = true;
+    document.body.appendChild(searchScript);
+
   } catch (err) {
     console.error(err);
   }

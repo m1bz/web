@@ -476,38 +476,60 @@ const DatabaseSetup = require('./scripts/setup-database');
   // API: GET /api/exercises (with media array)
   // ──────────────────────────────────────────────────────────────────────────
   app.get('/api/exercises', async (req, res) => {
-    try {
-      const { rows } = await database.query(`
-        SELECT
-          e.id,
-          e.name,
-          e.primary_muscle,
-          e.secondary_muscles,
-          e.difficulty,
-          e.equipment_type,
-          e.equipment_subtype,
-          e.instructions,
-          COALESCE(
-            json_agg(
-              json_build_object(
-                'type', m.media_type,
-                'path', m.media_path
-              )
-            ) FILTER (WHERE m.id IS NOT NULL),
-            '[]'
-          ) AS media
-        FROM exercises e
-        LEFT JOIN exercise_media m
-          ON m.exercise_id = e.id
-        GROUP BY e.id
-        ORDER BY e.name
-      `);
-      return res.json(rows);
-    } catch (err) {
-      console.error('Fetch exercises error:', err);
-      return res.sendStatus(500);
-    }
-  });
+  const { search } = req.query;
+  let sql = `
+    SELECT
+      e.id,
+      e.name,
+      e.primary_muscle,
+      e.secondary_muscles,
+      e.difficulty,
+      e.equipment_type,
+      e.equipment_subtype,
+      e.instructions,
+      COALESCE(
+        json_agg(
+          json_build_object('type', m.media_type, 'path', m.media_path)
+        ) FILTER (WHERE m.id IS NOT NULL),
+        '[]'
+      ) AS media
+    FROM exercises e
+    LEFT JOIN exercise_media m
+      ON m.exercise_id = e.id
+  `;
+  const params = [];
+
+  if (search) {
+    sql += `
+      WHERE
+        e.name ILIKE $1
+        OR e.equipment_type ILIKE $1
+        OR e.equipment_subtype ILIKE $1
+        OR e.primary_muscle ILIKE $1
+        OR EXISTS (
+          SELECT 1
+          FROM unnest(e.secondary_muscles) AS sm
+          WHERE sm ILIKE $1
+        )
+    `;
+    params.push(`%${search}%`);
+  }
+
+  sql += `
+    GROUP BY e.id
+    ORDER BY e.name
+    LIMIT 30
+  `;
+
+  try {
+    const { rows } = await database.query(sql, params);
+    return res.json(rows);
+  } catch (err) {
+    console.error('Fetch exercises error:', err);
+    return res.sendStatus(500);
+  }
+});
+
 
   // ──────────────────────────────────────────────────────────────────────────
   // API: GET /exercises.json (legacy, without media)

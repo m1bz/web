@@ -1,11 +1,21 @@
+<!-- public/header.html -->
 <header class="header" role="banner">
   <a href="home.html" class="logo-link">
-    <img src="logo.jpeg" alt="Spartacus" class="logo-img">
+    <img src="logo.jpeg" alt="Spartacus" class="logo-img" />
     <span class="logo-text">Spartacus</span>
   </a>
 
-  <input id="global-search" class="search-input" type="search"
-placeholder="Search anything…" aria-label="Global search">
-  <ul id="global-search-results" class="search-results" hidden></ul>
-    <button id="user-btn" class="user-btn" aria-label="Account"></button>
+  <div class="search-wrapper">
+    <input
+      id="global-search"
+      class="search-input"
+      type="search"
+      placeholder="Search exercises…"
+      autocomplete="off"
+      aria-label="Search exercises"
+    />
+    <ul id="global-search-results" class="search-results" hidden></ul>
+  </div>
+
+  <button id="user-btn" class="user-btn" aria-label="Account"></button>
 </header>
