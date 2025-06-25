@@ -3,24 +3,203 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Log Workout</title>
+  <title>Log Workout · Spartacus</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
+  <style>
+    .log-container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    .page-title {
+      text-align: center;
+      color: var(--brand);
+      font-size: 2rem;
+      margin-bottom: 2rem;
+    }
+    .log-section {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 2rem;
+      border-radius: var(--radius);
+      border: 1px solid rgba(52, 152, 219, 0.2);
+      margin-bottom: 2rem;
+    }
+    .section-header {
+      color: var(--brand-lite);
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: #ffffff;
+    }
+    .form-group select {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid rgba(52, 152, 219, 0.3);
+      border-radius: var(--radius);
+      font-size: 1rem;
+      background: rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+      transition: border-color 0.3s;
+      font-family: inherit;
+    }
+    .form-group select:focus {
+      outline: none;
+      border-color: var(--brand);
+      box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.1);
+    }
+    .form-group select option {
+      background: #2c3e50;
+      color: #ffffff;
+      padding: 0.5rem;
+    }
+    .log-button {
+      background: var(--brand);
+      color: white;
+      border: none;
+      padding: 1rem 2rem;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s;
+      width: 100%;
+      margin-top: 1rem;
+    }
+    .log-button:hover:not(:disabled) {
+      background: var(--brand-lite);
+    }
+    .log-button:disabled {
+      background: #6c757d;
+      cursor: not-allowed;
+    }
+    .status-message {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-radius: var(--radius);
+      text-align: center;
+      font-weight: 500;
+    }
+    .status-message:empty {
+      display: none;
+    }
+    .success-message {
+      background: rgba(40, 167, 69, 0.1);
+      color: #28a745;
+      border: 1px solid rgba(40, 167, 69, 0.3);
+    }
+    .error-message {
+      background: rgba(220, 53, 69, 0.1);
+      color: #dc3545;
+      border: 1px solid rgba(220, 53, 69, 0.3);
+    }
+    .info-message {
+      background: rgba(23, 162, 184, 0.1);
+      color: var(--brand-lite);
+      border: 1px solid rgba(23, 162, 184, 0.3);
+    }
+    .description {
+      color: #bdc3c7;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      margin-bottom: 1.5rem;
+    }
+    .workout-info {
+      background: rgba(52, 152, 219, 0.1);
+      padding: 1rem;
+      border-radius: var(--radius);
+      border: 1px solid rgba(52, 152, 219, 0.2);
+      margin-bottom: 1.5rem;
+    }
+    .workout-info h3 {
+      margin: 0 0 0.5rem 0;
+      color: var(--brand-lite);
+      font-size: 1rem;
+    }
+    .workout-info p {
+      margin: 0;
+      color: #bdc3c7;
+      font-size: 0.9rem;
+    }
+    .loading-state {
+      color: #bdc3c7;
+      font-style: italic;
+    }
+    @media (max-width: 768px) {
+      .log-container {
+        padding: 1rem;
+      }
+      .log-section {
+        padding: 1.5rem;
+      }
+    }
+  </style>
 </head>
 <body>
   <div id="site-header"></div>
 
-  <main class="layout" role="main">
-    <h1>Log Your Workout</h1>
+  <main class="layout" role="main" style="grid-template-columns:1fr;">
+    <div class="log-container">
+      
+      <h1 class="page-title">Log Your Workout</h1>
 
-    <section id="log-container">
-      <p>Select a workout to log for today:</p>
-      <select id="workout-select">
-        <option disabled selected>Loading your saved workouts…</option>
-      </select>
+      <div class="log-section">
+        <div class="section-header">
+          📝 Daily Workout Log
+        </div>
+        
+        <p class="description">
+          Select one of your saved workouts to log for today. You can only log one workout per day 
+          to maintain accurate tracking and prevent overtraining.
+        </p>
 
-      <button id="log-btn" class="btn-primary" disabled>Log Workout</button>
-      <p id="log-message" class="status-message"></p>
-    </section>
+        <div class="workout-info">
+          <h3>💡 Quick Tip</h3>
+          <p>
+            Make sure you've completed the workout before logging it. Your logged workouts 
+            contribute to your personal statistics and leaderboard rankings.
+          </p>
+        </div>
+
+        <div class="form-group">
+          <label for="workout-select">Choose a Workout</label>
+          <select id="workout-select">
+            <option disabled selected class="loading-state">Loading your saved workouts…</option>
+          </select>
+        </div>
+
+        <button id="log-btn" class="log-button" disabled>
+          Log Workout
+        </button>
+        
+        <div id="log-message" class="status-message"></div>
+      </div>
+
+      <!-- Additional Info Section -->
+      <div class="log-section">
+        <div class="section-header">
+          ℹ️ About Workout Logging
+        </div>
+        
+        <div class="description">
+          <p><strong>Daily Limit:</strong> You can log one workout every 24 hours to ensure accurate progress tracking.</p>
+          <p><strong>Statistics:</strong> Logged workouts contribute to your personal stats, streaks, and leaderboard position.</p>
+          <p><strong>History:</strong> View all your logged workouts in your profile to track your fitness journey.</p>
+        </div>
+      </div>
+
+    </div>
   </main>
 
   <script src="auth.js" defer></script>

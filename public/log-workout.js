@@ -4,7 +4,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   const logBtn   = document.getElementById('log-btn');
   const message  = document.getElementById('log-message');
 
-  /* 1. Load the user’s saved workouts */
+  // Helper function to set message with appropriate styling
+  function setMessage(text, type = 'info') {
+    message.textContent = text;
+    message.className = `status-message ${type}-message`;
+  }
+
+  /* 1. Load the user's saved workouts */
   async function fetchSavedWorkouts() {
     try {
       const res = await fetch('/api/saved-workouts', {
@@ -17,6 +23,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         select.innerHTML =
           '<option disabled selected>No saved workouts yet.</option>';
         logBtn.disabled = true;
+        setMessage('You need to create and save some workouts first before you can log them.', 'info');
         return;
       }
 
@@ -30,10 +37,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         select.appendChild(opt);
       });
       logBtn.disabled = false;
+      setMessage('Select a workout from the dropdown above to log it for today.', 'info');
 
     } catch (err) {
       console.error(err);
-      message.textContent = 'Error loading workouts.';
+      setMessage('Error loading workouts. Please try refreshing the page.', 'error');
     }
   }
 
@@ -43,7 +51,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!workoutId) return;
 
     logBtn.disabled  = true;
-    message.textContent = 'Logging…';
+    logBtn.textContent = 'Logging...';
+    setMessage('Logging your workout...', 'info');
 
     try {
       const res = await fetch('/api/log-workout', {
@@ -54,19 +63,21 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
 
       if (res.status === 429) {
-        message.textContent = 'You already logged a workout today.';
+        setMessage('You already logged a workout today. Come back tomorrow!', 'error');
       } else if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        message.textContent = data.message || 'Failed to log workout.';
+        setMessage(data.message || 'Failed to log workout. Please try again.', 'error');
       } else {
-        message.textContent = '✅ Workout logged!';
+        setMessage('✅ Workout logged successfully! Great job on completing your workout today.', 'success');
+        select.value = ''; // Reset selection
       }
 
     } catch (err) {
       console.error(err);
-      message.textContent = 'Network error – please try again.';
+      setMessage('Network error – please check your connection and try again.', 'error');
     } finally {
       logBtn.disabled = false;
+      logBtn.textContent = 'Log Workout';
     }
   });
 
