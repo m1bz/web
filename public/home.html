@@ -7,6 +7,19 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <style>
+    /* Override global layout styles for home page */
+    .home-layout {
+      display: block !important;
+      grid-template-columns: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      max-width: none !important;
+    }
+    .home-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
     .home-hero {
       text-align: center;
       padding: 3rem 2rem;
@@ -141,6 +154,9 @@
       min-width: 20px;
     }
     @media (max-width: 768px) {
+      .home-container {
+        padding: 1rem;
+      }
       .hero-title {
         font-size: 2rem;
       }
@@ -159,18 +175,19 @@
 <body class="home-page">
   <div id="site-header"></div>
 
-  <main class="layout" role="main" style="grid-template-columns:1fr; max-width: 1200px; margin: 0 auto; padding: 2rem;">
-    
-    <!-- Hero Section -->
-    <section class="home-hero">
-      <h1 class="hero-title">SPARTACUS</h1>
-      <h2 class="hero-subtitle">Your Ultimate Fitness Companion</h2>
-      <p class="hero-description">
-        Discover thousands of exercises, create personalized workouts, track your progress, 
-        and join a community of fitness enthusiasts. Transform your body and mind with Spartacus.
-      </p>
-      <a href="index.html" class="hero-cta">Start Exploring Exercises</a>
-    </section>
+  <main class="home-layout" role="main">
+    <div class="home-container">
+      
+      <!-- Hero Section -->
+      <section class="home-hero">
+        <h1 class="hero-title">SPARTACUS</h1>
+        <h2 class="hero-subtitle">Your Ultimate Fitness Companion</h2>
+        <p class="hero-description">
+          Discover thousands of exercises, create personalized workouts, track your progress, 
+          and join a community of fitness enthusiasts. Transform your body and mind with Spartacus.
+        </p>
+        <a href="index.html" class="hero-cta">Start Exploring Exercises</a>
+      </section>
 
     <!-- Features Grid -->
     <section class="features-grid">
@@ -252,8 +269,7 @@
           Admin Panel
         </a>
       </div>
-    </section>
-
+    </div>
   </main>
 
   <script defer src="auth.js"></script>

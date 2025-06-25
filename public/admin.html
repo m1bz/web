@@ -7,6 +7,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
   <style>
+    /* Override global layout styles for admin page */
+    .admin-layout {
+      display: block !important;
+      grid-template-columns: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      max-width: none !important;
+    }
     .admin-container {
       max-width: 1000px;
       margin: 0 auto;
@@ -300,7 +308,7 @@
   
   <div id="site-header"></div>
   
-  <main class="layout" role="main" style="grid-template-columns:1fr;">
+  <main class="admin-layout" role="main">
     <div class="admin-container">
       
       <h1 class="page-title">Exercise Management</h1>

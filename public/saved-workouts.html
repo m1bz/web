@@ -7,6 +7,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <style>
+    /* Override global layout styles for saved workouts page */
+    .saved-layout {
+      display: block !important;
+      grid-template-columns: none !important;
+      padding: 2rem !important;
+      margin: 0 auto !important;
+      max-width: 1200px !important;
+    }
     .workout-details {
       margin-top: 2rem;
       padding: 1.5rem;
@@ -148,7 +156,7 @@
 <body>
 <div id="site-header"></div>
 
-  <main class="layout" role="main">
+  <main class="saved-layout" role="main">
     <!-- Workout List View -->
     <div id="workout-list-view">
       <h1 style="text-align: center; color: var(--brand); margin-bottom: 2rem;">My Saved Workouts</h1>

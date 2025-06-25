@@ -7,6 +7,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <style>
+    /* Override global layout styles for export page */
+    .export-layout {
+      display: block !important;
+      grid-template-columns: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      max-width: none !important;
+    }
     .export-container {
       max-width: 800px;
       margin: 0 auto;
@@ -86,7 +94,7 @@
 <body>
   <div id="site-header"></div>
 
-  <main class="layout" role="main" style="grid-template-columns:1fr;">
+  <main class="export-layout" role="main">
     <div class="export-container">
       
       <h1 class="page-title">Data Exports</h1>
