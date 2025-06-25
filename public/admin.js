@@ -111,7 +111,7 @@
     
     if (selectedExercise) {
       populateModifyForm(selectedExercise);
-      document.getElementById('modify-form').style.display = 'block';
+      document.getElementById('modify-form-container').style.display = 'block';
     }
   }
 

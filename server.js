@@ -902,6 +902,8 @@ const leaderboardExportRouter = require('./routes/leaderboard_export'); // NEW
     }
   });
 
+
+
   // ──────────────────────────────────────────────────────────────────────────
   // API: GET /api/exercise-media/:id (get media for specific exercise)
   // ──────────────────────────────────────────────────────────────────────────
@@ -925,6 +927,8 @@ const leaderboardExportRouter = require('./routes/leaderboard_export'); // NEW
       return res.sendStatus(500);
     }
   });
+
+// ...existing code...
 
   // ──────────────────────────────────────────────────────────────────────────
   // API: DELETE /api/delete-media/:id (admin only, delete specific media file)

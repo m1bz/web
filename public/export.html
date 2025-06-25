@@ -3,39 +3,157 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Data Exports</title>
-  <link rel="stylesheet" href="/styles.css">
+  <title>Data Exports · Spartacus</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .export-container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    .page-title {
+      text-align: center;
+      color: var(--brand);
+      font-size: 2rem;
+      margin-bottom: 2rem;
+    }
+    .export-section {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 1.5rem;
+      border-radius: var(--radius);
+      border: 1px solid rgba(52, 152, 219, 0.2);
+      margin-bottom: 2rem;
+    }
+    .section-title {
+      color: var(--brand-lite);
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .export-links {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    .export-link {
+      display: flex;
+      align-items: center;
+      padding: 1rem;
+      background: rgba(52, 152, 219, 0.1);
+      border: 2px solid rgba(52, 152, 219, 0.3);
+      border-radius: var(--radius);
+      color: var(--text);
+      text-decoration: none;
+      transition: all 0.3s;
+      font-weight: 500;
+    }
+    .export-link:hover {
+      background: rgba(52, 152, 219, 0.2);
+      border-color: var(--brand);
+      color: var(--brand-lite);
+      transform: translateY(-2px);
+    }
+    .export-link::before {
+      content: "📥";
+      margin-right: 0.5rem;
+      font-size: 1.2rem;
+    }
+    .rss-link::before {
+      content: "📡";
+    }
+    .auth-note {
+      background: rgba(255, 193, 7, 0.1);
+      border: 1px solid rgba(255, 193, 7, 0.3);
+      color: #ffc107;
+      padding: 1rem;
+      border-radius: var(--radius);
+      font-size: 0.9rem;
+      margin-top: 1rem;
+    }
+    .description {
+      color: #bdc3c7;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+      line-height: 1.5;
+    }
+  </style>
 </head>
 <body>
   <div id="site-header"></div>
 
-  <main style="padding:2rem;max-width:600px;margin:auto;">
-    <h1>Data Exports</h1>
+  <main class="layout" role="main" style="grid-template-columns:1fr;">
+    <div class="export-container">
+      
+      <h1 class="page-title">Data Exports</h1>
 
-    <!-- ─────────────────────────────────────── -->
-    <h2>Public Workout Feed</h2>
-    <ul>
-      <li><a href="/export/rss"  download>View RSS Feed</a></li>
-      <li><a href="/export/csv"  download>Download All Workouts (CSV)</a></li>
-      <li><a href="/export/pdf"  download>Download All Workouts (PDF)</a></li>
-    </ul>
+      <!-- Public Workout Feed Section -->
+      <div class="export-section">
+        <h2 class="section-title">🌍 Public Workout Feed</h2>
+        <p class="description">
+          Access public workout data and community statistics. These feeds are available to everyone
+          and showcase the collective fitness journey of our community.
+        </p>
+        <div class="export-links">
+          <a href="/export/rss" class="export-link rss-link">RSS Feed</a>
+          <a href="/export/csv" class="export-link" download>All Workouts (CSV)</a>
+          <a href="/export/pdf" class="export-link" download>All Workouts (PDF)</a>
+        </div>
+      </div>
 
-    <!-- ─────────────────────────────────────── -->
-    <h2>Leaderboard</h2>
-    <ul>
-      <li><a href="/export/leaderboard/rss"  download>Leaderboard RSS</a></li>
-      <li><a href="/export/leaderboard/csv"  download>Leaderboard CSV</a></li>
-      <li><a href="/export/leaderboard/pdf"  download>Leaderboard PDF</a></li>
-    </ul>
+      <!-- Leaderboard Section -->
+      <div class="export-section">
+        <h2 class="section-title">🏆 Leaderboard</h2>
+        <p class="description">
+          Download leaderboard data showing top performers and community rankings across different
+          time periods and metrics.
+        </p>
+        <div class="export-links">
+          <a href="/export/leaderboard/csv" class="export-link" download>Leaderboard (CSV)</a>
+          <a href="/export/leaderboard/pdf" class="export-link" download>Leaderboard (PDF)</a>
+        </div>
+      </div>
 
-    <!-- ─────────────────────────────────────── -->
-    <h2>My Personal Stats <small>(requires login)</small></h2>
-    <ul>
-      <li><a href="/export/stats/rss"  download>My Stats RSS</a></li>
-      <li><a href="/export/stats/csv"  download>My Stats CSV</a></li>
-      <li><a href="/export/stats/pdf"  download>My Stats PDF</a></li>
-    </ul>
+      <!-- Personal Stats Section -->
+      <div class="export-section">
+        <h2 class="section-title">📊 Personal Stats</h2>
+        <p class="description">
+          Export your personal workout statistics and progress data. Track your fitness journey
+          with detailed analytics and historical data.
+        </p>
+        <div class="export-links">
+          <a href="/export/stats/csv" class="export-link" download>My Stats (CSV)</a>
+          <a href="/export/stats/pdf" class="export-link" download>My Stats (PDF)</a>
+        </div>
+        <div class="auth-note">
+          ⚠️ <strong>Login Required:</strong> You must be logged in to access your personal statistics.
+        </div>
+      </div>
+
+      <!-- Additional Info -->
+      <div class="export-section">
+        <h2 class="section-title">ℹ️ Export Information</h2>
+        <div class="description">
+          <p><strong>File Formats:</strong></p>
+          <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
+            <li><strong>CSV:</strong> Perfect for spreadsheet applications like Excel or Google Sheets</li>
+            <li><strong>PDF:</strong> Ready-to-print formatted reports</li>
+            <li><strong>RSS:</strong> Subscribe to live workout feed updates</li>
+          </ul>
+          <p style="margin-top: 1rem;">
+            <strong>Privacy:</strong> Personal data exports are only available to logged-in users and contain
+            only your own workout information. Public feeds contain anonymized community data.
+          </p>
+        </div>
+      </div>
+
+    </div>
   </main>
-    <script defer src="include-header.js"></script>
+
+  <script defer src="include-header.js"></script>
 </body>
 </html>

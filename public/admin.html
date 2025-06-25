@@ -7,6 +7,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
   <style>
+    .admin-container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
     .admin-modes {
       display: flex;
       gap: 1rem;
@@ -33,9 +41,102 @@
     }
     .mode-content {
       display: none;
+      width: 100%;
+      max-width: 900px;
     }
     .mode-content.active {
       display: block;
+    }
+    .form-container {
+      margin: 2rem 0;
+      padding: 1.5rem;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: var(--radius);
+      border: 1px solid rgba(52, 152, 219, 0.2);
+    }
+    .form-section-header {
+      color: var(--brand-lite);
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+    .form-group label {
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: #ffffff; /* Bright white like search results */
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      padding: 0.75rem;
+      border: 1px solid rgba(52, 152, 219, 0.3);
+      border-radius: var(--radius);
+      font-size: 1rem;
+      background: rgba(255, 255, 255, 0.1); /* Slightly more opaque background */
+      color: #ffffff; /* Bright white text like search results */
+      transition: border-color 0.3s;
+      font-family: inherit;
+    }
+    .form-group input::placeholder,
+    .form-group textarea::placeholder {
+      color: #bdc3c7; /* Light gray for placeholders */
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--brand);
+      box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.1);
+    }
+    .form-group textarea {
+      resize: vertical;
+      min-height: 120px;
+    }
+    .form-group select[multiple] {
+      min-height: 120px;
+    }
+    /* Style select options for better readability */
+    .form-group select option {
+      background: #2c3e50;
+      color: #ffffff;
+      padding: 0.5rem;
+    }
+    .form-group select option:checked {
+      background: var(--brand);
+      color: #ffffff;
+    }
+    .save-button {
+      background: var(--brand);
+      color: white;
+      border: none;
+      padding: 1rem 2rem;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s;
+      width: 100%;
+      margin-top: 1rem;
+    }
+    .save-button:hover {
+      background: var(--brand-lite);
+    }
+    .save-button:disabled {
+      background: #6c757d;
+      cursor: not-allowed;
     }
     .exercise-list {
       max-height: 300px;
@@ -43,6 +144,8 @@
       border: 2px solid rgba(52, 152, 219, 0.3);
       border-radius: var(--radius);
       margin-bottom: 1rem;
+      margin: 0 auto 1rem auto;
+      max-width: 700px;
     }
     .exercise-item {
       display: flex;
@@ -64,7 +167,7 @@
     }
     .exercise-name {
       font-weight: 600;
-      color: var(--brand-lite);
+      color: #ffffff; /* Bright white like search results */
     }
     .exercise-meta {
       font-size: 0.85rem;
@@ -75,6 +178,10 @@
       padding: 1rem;
       border: 2px dashed rgba(52, 152, 219, 0.3);
       border-radius: var(--radius);
+    }
+    .media-upload-section h4 {
+      color: #ffffff; /* Bright white for better visibility */
+      margin-bottom: 1rem;
     }
     .existing-media {
       display: grid;
@@ -113,12 +220,18 @@
       border: 2px solid #e74c3c;
       border-radius: var(--radius);
       padding: 1rem;
-      margin-top: 1rem;
+      margin: 1rem auto;
+      max-width: 600px;
+    }
+    .delete-confirm h4 {
+      color: #ffffff; /* Bright white for better readability */
+      margin-bottom: 1rem;
     }
     .confirm-buttons {
       display: flex;
       gap: 1rem;
       margin-top: 1rem;
+      justify-content: center;
     }
     .btn-danger {
       background: #e74c3c;
@@ -132,6 +245,55 @@
     .btn-danger:hover {
       background: #c0392b;
     }
+    .page-title {
+      text-align: center;
+      color: var(--brand);
+      font-size: 2rem;
+      margin-bottom: 2rem;
+      width: 100%;
+    }
+    .mode-title {
+      text-align: center;
+      color: var(--brand);
+      margin-bottom: 1.5rem;
+    }
+    .success-message {
+      background: rgba(40, 167, 69, 0.1);
+      color: #28a745;
+      padding: 1rem;
+      border-radius: var(--radius);
+      margin: 1rem 0;
+      border: 1px solid rgba(40, 167, 69, 0.3);
+    }
+    .error-message {
+      background: rgba(220, 53, 69, 0.1);
+      color: #dc3545;
+      padding: 1rem;
+      border-radius: var(--radius);
+      margin: 1rem 0;
+      border: 1px solid rgba(220, 53, 69, 0.3);
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .admin-container {
+        padding: 1rem;
+      }
+      .form-container {
+        padding: 1.5rem;
+      }
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+      .admin-modes {
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .mode-btn {
+        width: 200px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -139,7 +301,9 @@
   <div id="site-header"></div>
   
   <main class="layout" role="main" style="grid-template-columns:1fr;">
-    <section style="padding:2rem; max-width:800px; margin:0 auto;">
+    <div class="admin-container">
+      
+      <h1 class="page-title">Exercise Management</h1>
       
       <!-- Mode Selection -->
       <div class="admin-modes">
@@ -150,119 +314,151 @@
 
       <!-- CREATE MODE -->
       <div id="create-mode" class="mode-content active">
-        <h2 style="margin-bottom: 1.5rem; color: var(--brand);">Create New Exercise</h2>
-        <form id="exercise-form" class="auth-form" enctype="multipart/form-data">
-          <label>Exercise Name
-            <input type="text" name="name" required>
-          </label>
+        <h2 class="mode-title">Create New Exercise</h2>
+        <div class="form-container">
+          <div class="form-section-header">
+            ➕ Exercise Information
+          </div>
+          <form id="exercise-form" enctype="multipart/form-data">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Exercise Name</label>
+                <input type="text" name="name" required>
+              </div>
+              <div class="form-group">
+                <label>Primary Muscle</label>
+                <select name="primary_muscle" id="primary-muscle-select" required>
+                  <option value="" disabled selected>Select primary muscle</option>
+                </select>
+              </div>
+            </div>
 
-          <label>Primary Muscle
-            <select name="primary_muscle" id="primary-muscle-select" required>
-              <option value="" disabled selected>Select primary muscle</option>
-            </select>
-          </label>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Difficulty</label>
+                <select name="difficulty" required>
+                  <option value="novice">Novice</option>
+                  <option value="beginner">Beginner</option>
+                  <option value="intermediate">Intermediate</option>
+                  <option value="advanced">Advanced</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Equipment Type</label>
+                <input type="text" name="equipment_type" required>
+              </div>
+            </div>
 
-          <label>Secondary Muscles (hold Ctrl/Cmd to select multiple)
-            <select name="secondary_muscles" id="secondary-muscles-select" multiple size="5">
-              <!-- populated by admin.js -->
-            </select>
-          </label>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Equipment Subtype</label>
+                <input type="text" name="equipment_subtype">
+              </div>
+              <div class="form-group">
+                <label>Media (image or video)</label>
+                <input type="file" name="media" accept="image/*,video/*">
+              </div>
+            </div>
 
-          <label>Difficulty
-            <select name="difficulty" required>
-              <option value="novice">Novice</option>
-              <option value="beginner">Beginner</option>
-              <option value="intermediate">Intermediate</option>
-              <option value="advanced">Advanced</option>
-            </select>
-          </label>
+            <div class="form-group">
+              <label>Secondary Muscles (hold Ctrl/Cmd to select multiple)</label>
+              <select name="secondary_muscles" id="secondary-muscles-select" multiple>
+                <!-- populated by admin.js -->
+              </select>
+            </div>
 
-          <label>Equipment Type
-            <input type="text" name="equipment_type" required>
-          </label>
+            <div class="form-group">
+              <label>Instructions</label>
+              <textarea name="instructions" rows="5" required></textarea>
+            </div>
 
-          <label>Equipment Subtype
-            <input type="text" name="equipment_subtype">
-          </label>
-
-          <label>Instructions
-            <textarea name="instructions" rows="5" required></textarea>
-          </label>
-
-          <label>Media (image or video)
-            <input type="file" name="media" accept="image/*,video/*">
-          </label>
-
-          <button type="submit" class="btn-primary" style="width:100%;">Add Exercise</button>
-          <p id="submit-message" class="error-msg" hidden></p>
-        </form>
+            <button type="submit" class="save-button">Add Exercise</button>
+            <p id="submit-message" class="error-msg" hidden></p>
+          </form>
+        </div>
       </div>
 
       <!-- MODIFY MODE -->
       <div id="modify-mode" class="mode-content">
-        <h2 style="margin-bottom: 1.5rem; color: var(--brand);">Modify Exercise</h2>
+        <h2 class="mode-title">Modify Exercise</h2>
         
         <div class="exercise-list" id="modify-exercise-list">
           <p style="padding: 1rem; text-align: center;">Loading exercises...</p>
         </div>
 
-        <form id="modify-form" class="auth-form" enctype="multipart/form-data" style="display: none;">
-          <input type="hidden" id="modify-exercise-id" name="exercise_id">
-          
-          <label>Exercise Name
-            <input type="text" id="modify-name" name="name" required>
-          </label>
-
-          <label>Primary Muscle
-            <select id="modify-primary-muscle" name="primary_muscle" required>
-              <!-- populated by admin.js -->
-            </select>
-          </label>
-
-          <label>Secondary Muscles
-            <select id="modify-secondary-muscles" name="secondary_muscles" multiple size="5">
-              <!-- populated by admin.js -->
-            </select>
-          </label>
-
-          <label>Difficulty
-            <select id="modify-difficulty" name="difficulty" required>
-              <option value="novice">Novice</option>
-              <option value="beginner">Beginner</option>
-              <option value="intermediate">Intermediate</option>
-              <option value="advanced">Advanced</option>
-            </select>
-          </label>
-
-          <label>Equipment Type
-            <input type="text" id="modify-equipment-type" name="equipment_type" required>
-          </label>
-
-          <label>Equipment Subtype
-            <input type="text" id="modify-equipment-subtype" name="equipment_subtype">
-          </label>
-
-          <label>Instructions
-            <textarea id="modify-instructions" name="instructions" rows="5" required></textarea>
-          </label>
-
-          <div class="media-upload-section">
-            <h4>Existing Media</h4>
-            <div id="existing-media" class="existing-media"></div>
-            
-            <label style="margin-top: 1rem;">Add New Media
-              <input type="file" name="new_media" accept="image/*,video/*">
-            </label>
+        <div class="form-container" id="modify-form-container" style="display: none;">
+          <div class="form-section-header">
+            ✏️ Edit Exercise Information
           </div>
+          <form id="modify-form" enctype="multipart/form-data">
+            <input type="hidden" id="modify-exercise-id" name="exercise_id">
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label>Exercise Name</label>
+                <input type="text" id="modify-name" name="name" required>
+              </div>
+              <div class="form-group">
+                <label>Primary Muscle</label>
+                <select id="modify-primary-muscle" name="primary_muscle" required>
+                  <!-- populated by admin.js -->
+                </select>
+              </div>
+            </div>
 
-          <button type="submit" class="btn-primary" style="width:100%;">Update Exercise</button>
-          <p id="modify-message" class="error-msg" hidden></p>
-        </form>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Difficulty</label>
+                <select id="modify-difficulty" name="difficulty" required>
+                  <option value="novice">Novice</option>
+                  <option value="beginner">Beginner</option>
+                  <option value="intermediate">Intermediate</option>
+                  <option value="advanced">Advanced</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Equipment Type</label>
+                <input type="text" id="modify-equipment-type" name="equipment_type" required>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Equipment Subtype</label>
+                <input type="text" id="modify-equipment-subtype" name="equipment_subtype">
+              </div>
+              <div class="form-group">
+                <label>Add New Media</label>
+                <input type="file" name="new_media" accept="image/*,video/*">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Secondary Muscles</label>
+              <select id="modify-secondary-muscles" name="secondary_muscles" multiple>
+                <!-- populated by admin.js -->
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Instructions</label>
+              <textarea id="modify-instructions" name="instructions" rows="5" required></textarea>
+            </div>
+
+            <div class="media-upload-section">
+              <h4>Existing Media</h4>
+              <div id="existing-media" class="existing-media"></div>
+            </div>
+
+            <button type="submit" class="save-button">Update Exercise</button>
+            <p id="modify-message" class="error-msg" hidden></p>
+          </form>
+        </div>
       </div>
 
       <!-- DELETE MODE -->
       <div id="delete-mode" class="mode-content">
-        <h2 style="margin-bottom: 1.5rem; color: var(--brand);">Delete Exercise</h2>
+        <h2 class="mode-title">Delete Exercise</h2>
         
         <div class="exercise-list" id="delete-exercise-list">
           <p style="padding: 1rem; text-align: center;">Loading exercises...</p>
@@ -279,7 +475,7 @@
         </div>
       </div>
 
-    </section>
+    </div>
   </main>
 
   <script defer src="auth.js"></script>

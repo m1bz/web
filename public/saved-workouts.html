@@ -6,12 +6,175 @@
   <title>My Saved Workouts · Spartacus</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <style>
+    .workout-details {
+      margin-top: 2rem;
+      padding: 1.5rem;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: var(--radius);
+      border: 1px solid rgba(52, 152, 219, 0.2);
+    }
+    .workout-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid rgba(52, 152, 219, 0.2);
+      padding-bottom: 1rem;
+    }
+    .workout-title {
+      color: var(--brand-lite);
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0;
+    }
+    .workout-meta {
+      color: #bdc3c7;
+      font-size: 0.9rem;
+    }
+    .back-button {
+      background: rgba(52, 152, 219, 0.1);
+      border: 2px solid var(--brand);
+      color: var(--brand);
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+    .back-button:hover {
+      background: var(--brand);
+      color: white;
+    }
+    .exercises-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1rem;
+    }
+    .exercise-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(52, 152, 219, 0.15);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      transition: all 0.3s;
+    }
+    .exercise-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--brand);
+      box-shadow: 0 4px 12px rgba(52, 152, 219, 0.1);
+    }
+    .exercise-name {
+      color: var(--brand-lite);
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    .exercise-meta {
+      color: #bdc3c7;
+      font-size: 0.85rem;
+      margin-bottom: 1rem;
+    }
+    .exercise-instructions {
+      color: #ffffff;
+      line-height: 1.5;
+      margin-bottom: 1rem;
+    }
+    .exercise-media {
+      margin-top: 1rem;
+    }
+    .exercise-media img,
+    .exercise-media video {
+      width: 100%;
+      max-height: 200px;
+      object-fit: cover;
+      border-radius: var(--radius);
+    }
+    .secondary-muscles {
+      margin-top: 0.5rem;
+      font-size: 0.85rem;
+    }
+    .secondary-muscles strong {
+      color: var(--brand-lite);
+    }
+    .muscle-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.25rem;
+      margin-top: 0.25rem;
+    }
+    .muscle-tag {
+      background: rgba(52, 152, 219, 0.2);
+      color: var(--brand-lite);
+      padding: 0.2rem 0.5rem;
+      border-radius: 12px;
+      font-size: 0.75rem;
+    }
+    .workout-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .stat-item {
+      text-align: center;
+      padding: 1rem;
+      background: rgba(52, 152, 219, 0.1);
+      border-radius: var(--radius);
+    }
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--brand-lite);
+    }
+    .stat-label {
+      font-size: 0.8rem;
+      color: #bdc3c7;
+    }
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      color: #bdc3c7;
+    }
+    .error {
+      text-align: center;
+      padding: 2rem;
+      color: #e74c3c;
+      background: rgba(231, 76, 60, 0.1);
+      border-radius: var(--radius);
+    }
+  </style>
 </head>
 <body>
 <div id="site-header"></div>
 
   <main class="layout" role="main">
-    <section class="exercise-grid" id="saved-grid" aria-live="polite"></section>
+    <!-- Workout List View -->
+    <div id="workout-list-view">
+      <h1 style="text-align: center; color: var(--brand); margin-bottom: 2rem;">My Saved Workouts</h1>
+      <section class="exercise-grid" id="saved-grid" aria-live="polite"></section>
+    </div>
+
+    <!-- Workout Details View -->
+    <div id="workout-details-view" style="display: none;">
+      <div class="workout-details">
+        <div class="workout-header">
+          <div>
+            <h1 class="workout-title" id="detail-workout-name">Workout Name</h1>
+            <div class="workout-meta" id="detail-workout-meta">Created on date</div>
+          </div>
+          <button class="back-button" onclick="showWorkoutList()">← Back to Workouts</button>
+        </div>
+
+        <div class="workout-stats" id="workout-stats">
+          <!-- Stats will be populated by JS -->
+        </div>
+
+        <div class="exercises-grid" id="exercises-details">
+          <!-- Exercise details will be populated by JS -->
+        </div>
+      </div>
+    </div>
   </main>
 
   <script defer src="auth.js"></script>
