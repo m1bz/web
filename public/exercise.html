@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Exercise Details</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <!-- HEADER WILL BE INJECTED HERE -->
+  <div id="site-header"></div>
+
+  <main class="centered">
+    <div class="exercise-details card">
+      <h2 id="exercise-name">Loading…</h2>
+      <div id="media-container"></div>
+
+      <p><strong>Primary muscle:</strong> <span id="primary-muscle"></span></p>
+      <p><strong>Secondary muscles:</strong> <span id="secondary-muscles"></span></p>
+      <p><strong>Difficulty:</strong> <span id="difficulty"></span></p>
+      <p><strong>Equipment:</strong> <span id="equipment"></span></p>
+
+      <div>
+        <strong>Instructions:</strong>
+        <p id="instructions"></p>
+      </div>
+    </div>
+  </main>
+
+  <!-- load header + search + auth -->
+  <script defer src="include-header.js"></script>
+  <script defer src="search.js"></script>
+
+  <!-- exercise-detail logic -->
+  <script>
+  (async function() {
+    const params = new URLSearchParams(window.location.search);
+    const id     = params.get('id');
+    const details = document.querySelector('.exercise-details');
+
+    if (!id) {
+      details.innerHTML = '<p style="color:red;">No exercise ID provided.</p>';
+      return;
+    }
+
+    try {
+      // Fetch all exercises and find the one with matching id
+      const res = await fetch('/api/exercises');
+      if (!res.ok) throw new Error('Failed to load exercises');
+      const list = await res.json();
+      const ex = list.find(e => String(e.id) === id);
+
+      if (!ex) {
+        details.innerHTML = '<p style="color:red;">Exercise not found.</p>';
+        return;
+      }
+
+      // Populate fields
+      document.getElementById('exercise-name').textContent       = ex.name;
+      document.getElementById('primary-muscle').textContent     = ex.primary_muscle;
+      document.getElementById('secondary-muscles').textContent  = ex.secondary_muscles.join(', ') || '—';
+      document.getElementById('difficulty').textContent         = ex.difficulty;
+      document.getElementById('equipment').textContent          =
+        ex.equipment_subtype
+          ? `${ex.equipment_type} (${ex.equipment_subtype})`
+          : ex.equipment_type;
+      document.getElementById('instructions').textContent       = ex.instructions;
+
+      // Render media (images/videos)
+      const mediaContainer = document.getElementById('media-container');
+      mediaContainer.innerHTML = '';
+      if (ex.media && ex.media.length) {
+        ex.media.forEach(m => {
+          let el;
+          if (m.type === 'image') {
+            el = document.createElement('img');
+            el.src = m.path;
+            el.alt = ex.name;
+          } else if (m.type === 'video') {
+            el = document.createElement('video');
+            el.src = m.path;
+            el.controls = true;
+          }
+          el.style.maxWidth = '100%';
+          el.style.borderRadius = 'var(--radius)';
+          el.style.marginBottom = '1rem';
+          mediaContainer.appendChild(el);
+        });
+      }
+
+    } catch (err) {
+      console.error(err);
+      details.innerHTML = '<p style="color:red;">Error loading exercise.</p>';
+    }
+  })();
+  </script>
+</body>
+</html>
