@@ -20,7 +20,7 @@
 
 Spartacus Fitness is a comprehensive workout management platform that combines personalized exercise recommendations with advanced analytics and social features. Built with modern web technologies, it offers everything from interactive muscle mapping to competitive leaderboards.
 
-![Dashboard Overview](docs/images/dashboard-overview.png)
+![Dashboard Overview](docs/images/Screenshot 2025-06-25 185125.png)
 *Main dashboard showing personalized recommendations and user progress*
 
 ---
@@ -33,7 +33,7 @@ Spartacus Fitness is a comprehensive workout management platform that combines p
 - **Comprehensive Exercise Database**: 500+ exercises with detailed instructions
 - **Media Support**: Exercise videos and images for proper form
 
-![Exercise Explorer](docs/images/exercise-explorer.png)
+![Exercise Explorer](docs\images\Screenshot 2025-06-25 185213.png)
 *Interactive muscle map with exercise filtering*
 
 ### 💪 **Intelligent Workout Generation**
@@ -42,7 +42,7 @@ Spartacus Fitness is a comprehensive workout management platform that combines p
 - **Balanced Programming**: Ensures proper muscle group distribution
 - **Progressive Overload**: Automatic difficulty adjustments over time
 
-![Workout Generator](docs/images/workout-generator.gif)
+![Workout Generator](docs\images\Screenshot 2025-06-25 185314.png)
 *Smart workout generation process*
 
 ### 📊 **Advanced Analytics & Tracking**
@@ -51,7 +51,7 @@ Spartacus Fitness is a comprehensive workout management platform that combines p
 - **Body Composition Tracking**: Weight, measurements, and photos
 - **Workout History**: Detailed logs with searchable exercise database
 
-![Leaderboard](docs/images/leaderboard.png)
+![Leaderboard](docs\images\Screenshot 2025-06-25 185348.png)
 *Competitive leaderboards with ranking system*
 
 ### 📱 **Mobile-First Design**
@@ -60,7 +60,7 @@ Spartacus Fitness is a comprehensive workout management platform that combines p
 - **Offline Capability**: Core features work without internet
 - **Progressive Web App**: Install on mobile devices
 
-![Mobile Interface](docs/images/mobile-interface.png)
+![Mobile Interface](docs\images\Screenshot 2025-06-25 185623.png)
 *Mobile-optimized interface design*
 
 ---
