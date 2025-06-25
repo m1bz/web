@@ -723,10 +723,277 @@ const leaderboardExportRouter = require('./routes/leaderboard_export'); // NEW
     }
   });
 
+  
+
+
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // API: PUT /api/update-exercise (admin only, with media upload)
+  // ──────────────────────────────────────────────────────────────────────────
+  app.put(
+    '/api/update-exercise',
+    upload.single('new_media'),
+    async (req, res) => {
+      const userId = req.cookies.sid;
+      if (!userId) return res.sendStatus(401);
+
+      // Check admin
+      try {
+        const { rows } = await database.query(
+          'SELECT is_admin FROM users WHERE id=$1',
+          [userId]
+        );
+        if (!rows.length || !rows[0].is_admin) {
+          return res.sendStatus(403);
+        }
+      } catch (err) {
+        console.error(err);
+        return res.sendStatus(500);
+      }
+
+      const {
+        exercise_id,
+        name,
+        primary_muscle,
+        difficulty,
+        equipment_type,
+        equipment_subtype,
+        instructions
+      } = req.body;
+
+      let secondary_muscles = req.body.secondary_muscles || [];
+      if (typeof secondary_muscles === 'string') {
+        secondary_muscles = secondary_muscles
+          .split(',')
+          .map(s => s.trim())
+          .filter(Boolean);
+      }
+
+      if (!exercise_id || !name || !primary_muscle || !difficulty || !equipment_type || !instructions) {
+        return res.status(400).json({ message: 'Missing required fields' });
+      }
+
+      const client = database.client;
+      try {
+        await client.query('BEGIN');
+
+        // Update exercise
+        await client.query(
+          `UPDATE exercises SET
+             name = $1,
+             primary_muscle = $2,
+             secondary_muscles = $3,
+             difficulty = $4,
+             equipment_type = $5,
+             equipment_subtype = $6,
+             instructions = $7
+           WHERE id = $8`,
+          [
+            name,
+            primary_muscle,
+            secondary_muscles,
+            difficulty,
+            equipment_type,
+            equipment_subtype || null,
+            instructions,
+            exercise_id
+          ]
+        );
+
+        // If a new file was uploaded, add it
+        if (req.file) {
+          const mediaType = req.file.mimetype.startsWith('video/') ? 'video' : 'image';
+          const mediaPath = `/uploads/${req.file.filename}`;
+          await client.query(
+            `INSERT INTO exercise_media
+               (exercise_id, media_type, media_path)
+             VALUES ($1,$2,$3)`,
+            [exercise_id, mediaType, mediaPath]
+          );
+        }
+
+        await client.query('COMMIT');
+        return res.json({ message: 'Exercise updated successfully' });
+      } catch (err) {
+        await client.query('ROLLBACK');
+        console.error('Update exercise error:', err);
+        if (err.code === '23503') {
+          return res.status(400).json({ message: 'Invalid primary muscle' });
+        }
+        if (err.code === '23505') {
+          return res.status(400).json({ message: 'Exercise name already exists' });
+        }
+        if (err.code === '23514') {
+          return res.status(400).json({ message: 'Invalid difficulty level' });
+        }
+        return res.sendStatus(500);
+      }
+    }
+  );
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // API: DELETE /api/delete-exercise/:id (admin only)
+  // ──────────────────────────────────────────────────────────────────────────
+  app.delete('/api/delete-exercise/:id', async (req, res) => {
+    const userId = req.cookies.sid;
+    if (!userId) return res.sendStatus(401);
+
+    // Check admin
+    try {
+      const { rows } = await database.query(
+        'SELECT is_admin FROM users WHERE id=$1',
+        [userId]
+      );
+      if (!rows.length || !rows[0].is_admin) {
+        return res.sendStatus(403);
+      }
+    } catch (err) {
+      console.error(err);
+      return res.sendStatus(500);
+    }
+
+    const exerciseId = req.params.id;
+    if (!exerciseId || isNaN(exerciseId)) {
+      return res.status(400).json({ message: 'Invalid exercise ID' });
+    }
+
+    const client = database.client;
+    try {
+      await client.query('BEGIN');
+
+      // First, get all media files to delete from filesystem
+      const { rows: mediaFiles } = await client.query(
+        'SELECT media_path FROM exercise_media WHERE exercise_id = $1',
+        [exerciseId]
+      );
+
+      // Delete media records from database
+      await client.query(
+        'DELETE FROM exercise_media WHERE exercise_id = $1',
+        [exerciseId]
+      );
+
+      // Delete the exercise
+      const deleteResult = await client.query(
+        'DELETE FROM exercises WHERE id = $1',
+        [exerciseId]
+      );
+
+      if (deleteResult.rowCount === 0) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ message: 'Exercise not found' });
+      }
+
+      await client.query('COMMIT');
+
+      // Delete physical files from filesystem (async, don't wait)
+      for (const media of mediaFiles) {
+        const filePath = path.join(__dirname, 'public', media.media_path);
+        fs.unlink(filePath).catch(err => {
+          console.warn('Failed to delete media file:', filePath, err.message);
+        });
+      }
+
+      return res.json({ message: 'Exercise deleted successfully' });
+    } catch (err) {
+      await client.query('ROLLBACK');
+      console.error('Delete exercise error:', err);
+      return res.sendStatus(500);
+    }
+  });
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // API: GET /api/exercise-media/:id (get media for specific exercise)
+  // ──────────────────────────────────────────────────────────────────────────
+  app.get('/api/exercise-media/:id', async (req, res) => {
+    const exerciseId = req.params.id;
+    if (!exerciseId || isNaN(exerciseId)) {
+      return res.status(400).json({ message: 'Invalid exercise ID' });
+    }
+
+    try {
+      const { rows } = await database.query(
+        `SELECT id, media_type, media_path
+         FROM exercise_media
+         WHERE exercise_id = $1
+         ORDER BY id`,
+        [exerciseId]
+      );
+      return res.json(rows);
+    } catch (err) {
+      console.error('Get exercise media error:', err);
+      return res.sendStatus(500);
+    }
+  });
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // API: DELETE /api/delete-media/:id (admin only, delete specific media file)
+  // ──────────────────────────────────────────────────────────────────────────
+  app.delete('/api/delete-media/:id', async (req, res) => {
+    const userId = req.cookies.sid;
+    if (!userId) return res.sendStatus(401);
+
+    // Check admin
+    try {
+      const { rows } = await database.query(
+        'SELECT is_admin FROM users WHERE id=$1',
+        [userId]
+      );
+      if (!rows.length || !rows[0].is_admin) {
+        return res.sendStatus(403);
+      }
+    } catch (err) {
+      console.error(err);
+      return res.sendStatus(500);
+    }
+
+    const mediaId = req.params.id;
+    if (!mediaId || isNaN(mediaId)) {
+      return res.status(400).json({ message: 'Invalid media ID' });
+    }
+
+    try {
+      // Get media path before deleting
+      const { rows } = await database.query(
+        'SELECT media_path FROM exercise_media WHERE id = $1',
+        [mediaId]
+      );
+
+      if (rows.length === 0) {
+        return res.status(404).json({ message: 'Media not found' });
+      }
+
+      const mediaPath = rows[0].media_path;
+
+      // Delete from database
+      await database.query(
+        'DELETE FROM exercise_media WHERE id = $1',
+        [mediaId]
+      );
+
+      // Delete physical file (async, don't wait)
+      const filePath = path.join(__dirname, 'public', mediaPath);
+      fs.unlink(filePath).catch(err => {
+        console.warn('Failed to delete media file:', filePath, err.message);
+      });
+
+      return res.json({ message: 'Media deleted successfully' });
+    } catch (err) {
+      console.error('Delete media error:', err);
+      return res.sendStatus(500);
+    }
+  });
+
+// ...existing code continues...
+
 
   // ──────────────────────────────────────────────────────────────────────────
   // API: GET /exercises.json (legacy, without media)
   // ──────────────────────────────────────────────────────────────────────────
+
+
+
+
   app.get('/exercises.json', async (req, res) => {
     try {
       const { rows } = await database.query(`
